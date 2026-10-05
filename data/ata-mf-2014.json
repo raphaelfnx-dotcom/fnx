@@ -1,0 +1,98 @@
+{
+  "exam": {
+    "name": "Base comum ATA-MF / BB",
+    "reference": "Edital ESAF nº 05/2014 (ATA-MF) — matérias básicas",
+    "note": "Reduzido às matérias que também caem no BB (tag BB). O que é só do ATA-MF foi retirado por ora e pode ser substituído pelo edital do BB, se ele sair primeiro."
+  },
+  "subjects": [
+    {
+      "id": "portugues",
+      "name": "Língua Portuguesa",
+      "category": "básicos",
+      "questions": 20,
+      "weight": 2,
+      "color": "blue"
+    },
+    {
+      "id": "matematica",
+      "name": "Matemática e Raciocínio Lógico",
+      "category": "básicos",
+      "questions": 10,
+      "weight": 2,
+      "color": "green"
+    },
+    {
+      "id": "informatica",
+      "name": "Conhecimentos de Informática",
+      "category": "básicos",
+      "questions": 10,
+      "weight": 1,
+      "color": "purple"
+    }
+  ],
+  "topics": {
+    "portugues": [
+      "Compreensão e interpretação de textos",
+      "Ortografia oficial",
+      "Acentuação gráfica",
+      "Emprego das classes de palavras",
+      "Crase",
+      "Sintaxe da oração e do período",
+      "Pontuação",
+      "Concordância nominal e verbal",
+      "Regência nominal e verbal",
+      "Significação das palavras",
+      "Redação Oficial",
+      "Correspondências oficiais"
+    ],
+    "matematica": [
+      "Numeração",
+      "Números naturais: múltiplos, divisores, divisibilidade e restos",
+      "MDC e MMC",
+      "Frações e operações",
+      "Números decimais e dízimas periódicas",
+      "Sistemas de unidade, notação científica e bases não decimais",
+      "Razões e proporções",
+      "Escalas",
+      "Divisão proporcional",
+      "Regra de três",
+      "Porcentagem",
+      "Teoria dos conjuntos e conjuntos numéricos",
+      "Relações e funções de 1º e 2º grau",
+      "Probabilidade e estatística descritiva",
+      "Noções de lógica",
+      "Matemática financeira",
+      "Inequações",
+      "Sequências e progressões",
+      "Matrizes, logaritmos, raízes, radicais e fatoração",
+      "Estruturas lógicas",
+      "Lógica de argumentação",
+      "Lógica proposicional",
+      "Tabelas-verdade",
+      "Equivalências",
+      "Diagramas lógicos",
+      "Lógica de primeira ordem",
+      "Princípios de contagem e probabilidade",
+      "Operações com conjuntos",
+      "Problemas aritméticos, geométricos e matriciais"
+    ],
+    "informatica": [
+      "Lógica e estrutura de programação",
+      "Datamining e Datawarehouse",
+      "Armazenamento de dados",
+      "Banco de dados relacional",
+      "Arquitetura e administração de bancos de dados",
+      "Servidores físicos e virtualizados",
+      "Computação em nuvem",
+      "Editores de texto, planilhas e apresentações",
+      "Internet, correio eletrônico e busca",
+      "Redes sociais e grupos de discussão",
+      "Ameaças e segurança da informação"
+    ]
+  },
+  "bb": {
+    "portugues": [true, true, false, true, true, true, true, true, true, false, false, false],
+    "matematica": [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, false, true, true, true, true, true, true, true, true, true, true, true, true],
+    "informatica": [false, true, false, false, false, false, false, true, true, true, true]
+  }
+}

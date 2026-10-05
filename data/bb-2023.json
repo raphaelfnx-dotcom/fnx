@@ -1,0 +1,299 @@
+{
+  "exam": {
+    "name": "Banco do Brasil — Agência",
+    "reference": "Edital Verticalizado BB Agência 2023",
+    "note": "25 questões básicas + 45 específicas (reais, segundo o edital). A divisão por matéria é uma estimativa minha proporcional ao tamanho de cada bloco — o verticalizado não detalha questões por matéria. A tag ATA-MF marca o que também cai no outro edital que você acompanha."
+  },
+  "subjects": [
+    {
+      "id": "bb-portugues",
+      "name": "Língua Portuguesa",
+      "category": "básicos",
+      "questions": 6,
+      "weight": 2,
+      "color": "blue"
+    },
+    {
+      "id": "bb-ingles",
+      "name": "Língua Inglesa",
+      "category": "básicos",
+      "questions": 1,
+      "weight": 1,
+      "color": "cyan"
+    },
+    {
+      "id": "bb-matematica",
+      "name": "Matemática",
+      "category": "básicos",
+      "questions": 8,
+      "weight": 2,
+      "color": "green"
+    },
+    {
+      "id": "bb-atualidades",
+      "name": "Atualidades do Mercado Financeiro",
+      "category": "básicos",
+      "questions": 10,
+      "weight": 1,
+      "color": "orange"
+    },
+    {
+      "id": "bb-matfin",
+      "name": "Matemática Financeira",
+      "category": "específicos",
+      "questions": 3,
+      "weight": 2,
+      "color": "yellow"
+    },
+    {
+      "id": "bb-bancarios",
+      "name": "Conhecimentos Bancários",
+      "category": "específicos",
+      "questions": 18,
+      "weight": 2,
+      "color": "red"
+    },
+    {
+      "id": "bb-informatica",
+      "name": "Conhecimentos de Informática",
+      "category": "específicos",
+      "questions": 11,
+      "weight": 1,
+      "color": "purple"
+    },
+    {
+      "id": "bb-vendas",
+      "name": "Vendas e Negociação",
+      "category": "específicos",
+      "questions": 13,
+      "weight": 1,
+      "color": "pink"
+    }
+  ],
+  "topics": {
+    "bb-portugues": [
+      "Compreensão de textos",
+      "Ortografia oficial",
+      "Classe e emprego de palavras",
+      "Emprego do acento indicativo de crase",
+      "Sintaxe da oração e do período",
+      "Emprego dos sinais de pontuação",
+      "Concordância verbal e nominal",
+      "Regência verbal e nominal",
+      "Colocação pronominal dos pronomes oblíquos átonos (próclise, mesóclise e ênclise)"
+    ],
+    "bb-ingles": [
+      "Vocabulário fundamental e aspectos gramaticais básicos para compreensão de textos"
+    ],
+    "bb-matematica": [
+      "Números inteiros, racionais e reais; problemas de contagem",
+      "Sistema legal de medidas",
+      "Razões e proporções; divisão proporcional; regras de três simples e compostas; porcentagens",
+      "Lógica proposicional",
+      "Noções de conjuntos",
+      "Relações e funções; funções polinomiais; funções exponenciais e logarítmicas",
+      "Matrizes",
+      "Determinantes",
+      "Sistemas lineares",
+      "Sequências",
+      "Progressões aritméticas e progressões geométricas"
+    ],
+    "bb-atualidades": [
+      "Os bancos na era digital: atualidade, tendências e desafios",
+      "Internet banking",
+      "Mobile banking",
+      "Open banking",
+      "Novos modelos de negócios",
+      "Fintechs, startups e big techs",
+      "Sistema de bancos-sombra (shadow banking)",
+      "Funções da moeda",
+      "O dinheiro na era digital: blockchain, bitcoin e demais criptomoedas",
+      "Marketplace",
+      "Correspondentes bancários",
+      "Arranjos de pagamentos",
+      "Sistema de pagamentos instantâneos (PIX)",
+      "Segmentação e interações digitais",
+      "Transformação digital no Sistema Financeiro"
+    ],
+    "bb-matfin": [
+      "Conceitos gerais: valor do dinheiro no tempo, capital e taxas de juros, capitalização e regimes, fluxos de caixa, equivalência financeira",
+      "Juros simples: montante, juros, taxa, principal e prazo da operação",
+      "Juros compostos: montante, juros, taxa, principal e prazo da operação",
+      "Sistemas de amortização: Price e SAC"
+    ],
+    "bb-bancarios": [
+      "Sistema Financeiro Nacional: estrutura, órgãos normativos e instituições supervisoras, executoras e operadoras",
+      "Mercado financeiro e seus desdobramentos (monetário, de crédito, de capitais e cambial)",
+      "Moeda e política monetária: políticas convencionais e não convencionais (Quantitative Easing); Selic e operações compromissadas; depósitos remunerados dos bancos comerciais",
+      "Orçamento público, títulos do Tesouro Nacional e dívida pública",
+      "Produtos bancários: cartões, crédito direto ao consumidor, crédito rural, poupança, capitalização, previdência, consórcio, investimentos e seguros",
+      "Noções de mercado de capitais",
+      "Noções de mercado de câmbio: instituições autorizadas e operações básicas",
+      "Regimes de taxas de câmbio fixas, flutuantes e intermediários",
+      "Taxas de câmbio nominais e reais",
+      "Impactos das taxas de câmbio sobre exportações e importações",
+      "Diferencial de juros interno/externo, prêmios de risco e fluxo de capitais",
+      "Dinâmica do mercado: operações no mercado interbancário",
+      "Mercado bancário: tesouraria, varejo bancário e recuperação de crédito",
+      "Taxas de juros de curto prazo e a curva de juros; taxas nominais e reais",
+      "Garantias do Sistema Financeiro Nacional: aval, fiança, penhor mercantil, alienação fiduciária, hipoteca, fianças bancárias",
+      "Crime de lavagem de dinheiro: conceito, etapas, Lei nº 9.613/98, Circular nº 3.978/2020 e Carta Circular nº 4.001/2020",
+      "Autorregulação bancária e Normativos SARB",
+      "Sigilo Bancário: Lei Complementar nº 105/2001",
+      "Lei Geral de Proteção de Dados (LGPD): Lei nº 13.709/2018",
+      "Legislação anticorrupção: Lei nº 12.846/2013 e Decreto nº 11.129/2022",
+      "Segurança cibernética: Resolução CMN nº 4.893/2021",
+      "Ética aplicada: ética empresarial e profissional; Código de Ética do Banco do Brasil",
+      "Política de Responsabilidade Socioambiental do Banco do Brasil",
+      "ASG (Ambiental, Social e Governança): economia sustentável, financiamentos, mercado PJ"
+    ],
+    "bb-informatica": [
+      "Noções de sistemas operacionais: Windows 10 e ambiente Linux (SUSE SLES 15 SP2)",
+      "Edição de textos, planilhas e apresentações (Microsoft Office / O365)",
+      "Segurança da informação: fundamentos, conceitos e mecanismos",
+      "Proteção de estações de trabalho: controle de USB, hardening, antimalware e firewall pessoal",
+      "Organização e gerenciamento de informações, arquivos, pastas e programas",
+      "Redes de computadores: conceitos, ferramentas, aplicativos e procedimentos de internet/intranet",
+      "Navegador Web (Edge e Firefox), busca e pesquisa na Web",
+      "Correio eletrônico, grupos de discussão, fóruns e wikis",
+      "Redes sociais (Twitter, Facebook, LinkedIn, WhatsApp, YouTube, Instagram, Telegram)",
+      "Sistemas de suporte à decisão e inteligência de negócio",
+      "Fundamentos sobre análise de dados",
+      "Conceitos de educação a distância",
+      "Tecnologias e ferramentas multimídia, de áudio e vídeo",
+      "Ferramentas de produtividade e trabalho remoto (Teams, Webex, Google Hangout, Drive, Skype)"
+    ],
+    "bb-vendas": [
+      "Estratégia empresarial: análise de mercado, forças competitivas, imagem institucional, identidade e posicionamento",
+      "Segmentação de mercado",
+      "Ações para aumentar o valor percebido pelo cliente",
+      "Gestão da experiência do cliente",
+      "Aprendizagem e sustentabilidade organizacional",
+      "Características dos serviços: intangibilidade, inseparabilidade, variabilidade e perecibilidade",
+      "Gestão da qualidade em serviços",
+      "Técnicas de vendas: da pré-abordagem ao pós-vendas",
+      "Marketing digital: geração de leads, copywriting, gatilhos mentais, inbound marketing",
+      "Ética e conduta profissional em vendas",
+      "Padrões de qualidade no atendimento aos clientes",
+      "Utilização de canais remotos para vendas",
+      "Comportamento do consumidor e sua relação com vendas e negociação",
+      "Política de Relacionamento com o Cliente: Resolução nº 4.949/2021",
+      "Ouvidoria em instituições financeiras: Resolução CMN nº 4.860/2020",
+      "Estatuto da Pessoa com Deficiência: Lei nº 13.146/2015",
+      "Código de Proteção e Defesa do Consumidor: Lei nº 8.078/1990"
+    ]
+  },
+  "ata": {
+    "bb-portugues": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false
+    ],
+    "bb-ingles": [
+      false
+    ],
+    "bb-matematica": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "bb-atualidades": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "bb-matfin": [
+      true,
+      true,
+      true,
+      true
+    ],
+    "bb-bancarios": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "bb-informatica": [
+      false,
+      true,
+      true,
+      true,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false
+    ],
+    "bb-vendas": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  }
+}
