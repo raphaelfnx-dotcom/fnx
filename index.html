@@ -129,6 +129,8 @@ label.lb{display:block;font-size:12.5px;color:var(--mut);margin:0 0 6px}
 .datebar .lab{flex:1;min-width:160px;text-align:center;font-weight:600;text-transform:capitalize}
 .entry-topic{font-size:18px;font-weight:650;margin:2px 0 8px}
 .entry-text{white-space:pre-wrap;word-break:break-word;line-height:1.65}
+.pbarmini{height:8px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden}
+.pbarmini i{display:block;height:100%;border-radius:99px;background:var(--acc)}
 .sentry{padding:14px 0;border-bottom:1px solid var(--line)}
 .sentry:first-child{padding-top:0}
 .sentry:last-child{border-bottom:0}
@@ -417,18 +419,20 @@ const BELL='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="
 /* ============ estado ============ */
 const DEFAULT_FOCUS={goal:60,study:[],questions:[],errors:[],topicDone:{}};
 const DEFAULT_FIN={entries:[],cats:['Moradia','Alimentação','Transporte','Lazer','Saúde','Assinaturas','Outros']};
+const DEFAULT_UDEMY={progress:{},projStatus:{},projLink:{},projNotes:{},certStatus:{},purchases:{},journal:[]};
 const S={cfg:{tasks:[],start:null},months:{},focus:clone(DEFAULT_FOCUS),fin:clone(DEFAULT_FIN),tab:'checks',focusTab:'dash',viewDay:todayK(),checkDay:todayK(),studyEdit:null,editId:null,delId:null,
-  period:'week',anchor:todayK(),selDay:null,histQ:'',histN:15,studyErr:'',newAlarm:null,editAlarm:undefined,notifDismiss:false,onceText:'',focusErrQ:'',focusSubFilt:'',trDay:todayK(),trTab:'log',trPick:{},trEx:null,trPeriod:'week',trAnchor:todayK(),trErr:'',focusExam:(localStorage.getItem('fnx-exam')||'ata'),studyMode:(localStorage.getItem('fnx-studymode')||'general'),
-  finMonth:todayK().slice(0,7),finEdit:null,finDraft:null,finType:'expense',finErr:''};
+  period:'week',anchor:todayK(),selDay:null,histQ:'',histN:15,studyErr:'',newAlarm:null,editAlarm:undefined,notifDismiss:false,onceText:'',focusErrQ:'',focusSubFilt:'',trDay:todayK(),trTab:'log',trPick:{},trEx:null,trPeriod:'week',trAnchor:todayK(),trErr:'',focusExam:(localStorage.getItem('fnx-exam')||'ata'),studyMode:(localStorage.getItem('fnx-studymode')||'udemy'),
+  finMonth:todayK().slice(0,7),finEdit:null,finDraft:null,finType:'expense',finErr:'',
+  udemy:clone(DEFAULT_UDEMY),udTab:'dash',udOpen:null,udErr:''};
 let LS='fnx-data-v1';const LSS='fnx-settings-v1';
 let SET={amb:'rain',sound:false,vol:.5,pal:'auto'};
 try{Object.assign(SET,JSON.parse(localStorage.getItem(LSS)||'{}'))}catch(e){}
 SET.pomo=Object.assign({f:25,s:5,l:15,n:4},SET.pomo||{});
 const saveSet=()=>{try{localStorage.setItem(LSS,JSON.stringify(SET))}catch(e){}};
-const saveLocal=()=>{try{localStorage.setItem(LS,JSON.stringify({cfg:S.cfg,months:S.months,focus:S.focus,fin:S.fin}))}catch(e){}};
+const saveLocal=()=>{try{localStorage.setItem(LS,JSON.stringify({cfg:S.cfg,months:S.months,focus:S.focus,fin:S.fin,udemy:S.udemy}))}catch(e){}};
 function fbConfigured(){const c=window.FNX_FIREBASE;return !!(c&&c.apiKey&&!/COLE|SEU_|YOUR/i.test(c.apiKey+c.projectId))}
 function loadLocal(){
-  S.cfg={tasks:[],start:null};S.months={};S.focus=clone(DEFAULT_FOCUS);S.fin=clone(DEFAULT_FIN);
+  S.cfg={tasks:[],start:null};S.months={};S.focus=clone(DEFAULT_FOCUS);S.fin=clone(DEFAULT_FIN);S.udemy=clone(DEFAULT_UDEMY);
   try{
     const o=JSON.parse(localStorage.getItem(LS)||'null');
     if(o){
@@ -436,6 +440,7 @@ function loadLocal(){
       S.months=o.months||{};
       if(o.focus)S.focus=Object.assign(clone(DEFAULT_FOCUS),o.focus);
       if(o.fin)S.fin=Object.assign(clone(DEFAULT_FIN),o.fin);
+      if(o.udemy)S.udemy=Object.assign(clone(DEFAULT_UDEMY),o.udemy);
     }
   }catch(e){}
   // Se houver dados legados do projeto ATA-MF no navegador, importa sem perder nada
@@ -484,7 +489,7 @@ function setSync(s){syncState=s;const el=$('#sync');el.dataset.s=s;$('#syncTxt')
 const anyDirty=()=>Object.keys(dirty).some(k=>dirty[k]);
 function queueWrite(kind,key){
   if(!S.cfg.start)S.cfg.start=todayK();
-  const id=kind==='cfg'?'cfg':kind==='focus'?'focus':kind==='fin'?'fin':'m:'+key;dirty[id]=true;saveLocal();
+  const id=kind==='cfg'?'cfg':kind==='focus'?'focus':kind==='fin'?'fin':kind==='udemy'?'udemy':'m:'+key;dirty[id]=true;saveLocal();
   if(!base)return;
   clearTimeout(timers[id]);setSync('saving');
   timers[id]=setTimeout(()=>flush(id,kind,key),700);
@@ -493,14 +498,14 @@ function flush(id,kind,key){
   clearTimeout(timers[id]);
   chain[id]=(chain[id]||Promise.resolve()).then(async()=>{
     if(!dirty[id])return;
-    const payload=kind==='cfg'?clone(S.cfg):kind==='focus'?clone(S.focus):kind==='fin'?clone(S.fin):{days:clone(S.months[key]||{})};
+    const payload=kind==='cfg'?clone(S.cfg):kind==='focus'?clone(S.focus):kind==='fin'?clone(S.fin):kind==='udemy'?clone(S.udemy):{days:clone(S.months[key]||{})};
     dirty[id]=false;
-    try{await base.set(kind==='cfg'?base.cfgRef:kind==='focus'?base.focusRef:kind==='fin'?base.finRef:base.month(key),payload)}
+    try{await base.set(kind==='cfg'?base.cfgRef:kind==='focus'?base.focusRef:kind==='fin'?base.finRef:kind==='udemy'?base.udemyRef:base.month(key),payload)}
     catch(e){dirty[id]=true;setSync('error');return}
     if(!anyDirty())setSync('ok');
   });
 }
-function flushAll(){for(const id in timers){if(dirty[id]){const m=id.startsWith('m:');const kind=id==='focus'?'focus':id==='fin'?'fin':m?'month':'cfg';flush(id,kind,m?id.slice(2):null)}}}
+function flushAll(){for(const id in timers){if(dirty[id]){const m=id.startsWith('m:');const kind=id==='focus'?'focus':id==='fin'?'fin':id==='udemy'?'udemy':m?'month':'cfg';flush(id,kind,m?id.slice(2):null)}}}
 addEventListener('pagehide',flushAll);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)flushAll()});
 
@@ -530,9 +535,9 @@ function startSession(u){
   try{localStorage.setItem('fnx-last-uid',u.uid)}catch(e){}
   acctEmail=u.email||'';showAuth(false);
   const {fs,db}=fb;
-  const cfgRef=fs.doc(db,'users',u.uid,'store','cfg'),focusRef=fs.doc(db,'users',u.uid,'store','focus'),finRef=fs.doc(db,'users',u.uid,'store','fin'),colRef=fs.collection(db,'users',u.uid,'months');
-  base={cfgRef,focusRef,finRef,colRef,month:k=>fs.doc(colRef,k),set:fs.setDoc,unsubs:[]};
-  let firstC=true,firstF=true,firstFin=true,firstM=true;
+  const cfgRef=fs.doc(db,'users',u.uid,'store','cfg'),focusRef=fs.doc(db,'users',u.uid,'store','focus'),finRef=fs.doc(db,'users',u.uid,'store','fin'),udemyRef=fs.doc(db,'users',u.uid,'store','udemy'),colRef=fs.collection(db,'users',u.uid,'months');
+  base={cfgRef,focusRef,finRef,udemyRef,colRef,month:k=>fs.doc(colRef,k),set:fs.setDoc,unsubs:[]};
+  let firstC=true,firstF=true,firstFin=true,firstUd=true,firstM=true;
   base.unsubs.push(fs.onSnapshot(cfgRef,snap=>{
     if(!snap.exists()){
       if(firstC&&!snap.metadata.fromCache){firstC=false;if(S.cfg.tasks.length||S.cfg.start)queueWrite('cfg')}
@@ -569,6 +574,17 @@ function startSession(u){
     S.fin=Object.assign(clone(DEFAULT_FIN),d);
     saveLocal();softRender();
   },()=>setSync('error')));
+  base.unsubs.push(fs.onSnapshot(udemyRef,snap=>{
+    if(!snap.exists()){
+      if(firstUd&&!snap.metadata.fromCache){firstUd=false;if(S.udemy.journal.length)queueWrite('udemy')}
+      return;
+    }
+    firstUd=false;
+    if(dirty.udemy)return;
+    const d=snap.data()||{};
+    S.udemy=Object.assign(clone(DEFAULT_UDEMY),d);
+    saveLocal();softRender();
+  },()=>setSync('error')));
   base.unsubs.push(fs.onSnapshot(colRef,snap=>{
     let ch=false;
     snap.docChanges().forEach(c=>{
@@ -587,7 +603,7 @@ function startSession(u){
 }
 function endSession(){
   endListeners();
-  S.cfg={tasks:[],start:null};S.months={};S.focus=clone(DEFAULT_FOCUS);S.fin=clone(DEFAULT_FIN);acctEmail='';
+  S.cfg={tasks:[],start:null};S.months={};S.focus=clone(DEFAULT_FOCUS);S.fin=clone(DEFAULT_FIN);S.udemy=clone(DEFAULT_UDEMY);acctEmail='';
   setSync('conn');showAuth(true);render();
 }
 const AUTH_ERR={'auth/invalid-credential':'E-mail ou senha incorretos.','auth/wrong-password':'E-mail ou senha incorretos.','auth/user-not-found':'E-mail ou senha incorretos.','auth/invalid-email':'E-mail inválido.','auth/email-already-in-use':'Este e-mail já tem conta. Use “Entrar”.','auth/weak-password':'Senha muito fraca (mínimo 6 caracteres).','auth/network-request-failed':'Sem conexão com a internet.','auth/too-many-requests':'Muitas tentativas. Aguarde um pouco e tente de novo.','auth/missing-password':'Informe a senha.'};
@@ -770,14 +786,14 @@ function studyForm(e,idAttr){
 function studySwitcherHTML(){
   return`<section class="card" style="padding-bottom:10px">
     <div class="pmodes" style="margin:0 0 8px">
-      <button class="${S.studyMode==='general'?'on':''}" data-a="study-mode" data-m="general">📚 TI &amp; Geral</button>
+      <button class="${S.studyMode==='udemy'?'on':''}" data-a="study-mode" data-m="udemy">🎓 Pós Udemy</button>
       <button class="${S.studyMode==='contest'?'on':''}" data-a="study-mode" data-m="contest">🎯 Concurso</button>
     </div>
-    <div class="muted sm">${S.studyMode==='contest'?'Edital, Pomodoro, sessões e questões do concurso.':'Seus registros de estudo do dia a dia — TI, cursos, o que for.'}</div>
+    <div class="muted sm">${S.studyMode==='contest'?'Edital, Pomodoro, sessões e questões do concurso.':'Trilha Infra → Cloud → DevOps → Security: módulos, projetos, cronograma, carreira, certificações, diário e compras.'}</div>
   </section>`;
 }
 function renderStudyHub(){
-  if(S.studyMode==='contest')renderFocus();else renderStudy();
+  if(S.studyMode==='contest')renderFocus();else renderUdemy();
   const v=$('#view');if(v)v.insertAdjacentHTML('afterbegin',studySwitcherHTML());
 }
 function renderStudy(){
@@ -1042,6 +1058,19 @@ function renderSummary(){
     </div>`;
   })()}
 
+  <h2 class="sumdiv">🎓 Pós Udemy</h2>
+  ${(()=>{
+    const jr=S.udemy.journal.filter(j=>j.date>=r.s&&j.date<=r.e);
+    const hrs=jr.reduce((a,x)=>a+(+x.hours||0),0);
+    const mods=new Set(jr.map(x=>x.module));
+    if(!jr.length)return`<section class="card"><div class="empty">Nenhum estudo da trilha Pós Udemy neste período. Registre na aba Estudos › 🎓 Pós Udemy › Diário.</div></section>`;
+    return`<div class="kpis">
+      <div class="kpi"><div class="k">Horas estudadas</div><div class="v">${hrs.toFixed(1)}<span class="muted" style="font-size:15px;font-weight:500">h</span></div><div class="s">${jr.length} ${jr.length===1?'registro':'registros'}</div></div>
+      <div class="kpi"><div class="k">Módulos trabalhados</div><div class="v">${mods.size}</div><div class="s">${[...mods].slice(0,2).map(esc).join(', ')||'—'}</div></div>
+      <div class="kpi"><div class="k">Progresso geral da trilha</div><div class="v">${udTotal()}<span class="muted" style="font-size:15px;font-weight:500">%</span></div><div class="s">${udDone()}/${UD_MODULES.length} módulos concluídos</div></div>
+    </div>`;
+  })()}
+
   <section class="card"><div class="head" style="margin-bottom:8px"><div><h2>Resumo em texto</h2><div class="muted sm">Copie e cole numa conversa com o Claude para pedir uma leitura mais a fundo</div></div><button class="btn ghost sm2" data-a="copy-summary">📋 Copiar</button></div><div class="muted sm" id="copyMsg"></div></section>`;
 }
 function inRangeDay(k,r){return k>=r.s&&k<=r.e}
@@ -1055,11 +1084,13 @@ function buildSummaryText(){
   const hist=trData(),dk=Object.keys(hist.days).filter(k=>k>=r.s&&k<=r.e);
   const vol=dk.reduce((a,k)=>a+hist.days[k].vol,0);
   const fl=S.fin.entries.filter(e=>e.date>=r.s&&e.date<=r.e),ft=finTotals(fl);
+  const ujr=S.udemy.journal.filter(j=>j.date>=r.s&&j.date<=r.e),uhrs=ujr.reduce((a,x)=>a+(+x.hours||0),0);
   const lines=[
     `Resumo FNX — ${r.label} (${S.period==='week'?'semana':'mês'})`,
     ``,
     `Rotina: progresso médio ${av==null?'—':av+'%'}, ${sumDone}/${sumN} tarefas concluídas, estudo registrado em ${stDays}/${sts.length} dias.`,
     `Concurso (${EXAMS[S.focusExam].label}): ${(mins/60).toFixed(1)}h estudadas em ${sess.length} sessões; ${qT} questões (${qT?Math.round(qC/qT*100)+'% de acerto':'sem dados'}).`,
+    `Pós Udemy: ${uhrs.toFixed(1)}h estudadas em ${ujr.length} registros; trilha em ${udTotal()}% (${udDone()}/${UD_MODULES.length} módulos concluídos).`,
     `Treino: ${dk.length} dias treinados, volume ${Math.round(vol)}kg.`,
     `Financeiro: entradas ${BRL(ft.inc)}, saídas ${BRL(ft.exp)}, saldo ${BRL(ft.bal)}.`,
     ``,
@@ -1763,6 +1794,175 @@ function finAction(a,el){
       finSave({type:S.finType,desc:$('#finDesc').value,amount:$('#finAmt').value,date:$('#finDate').value,cat:$('#finCat').value});break;
   }
 }
+/* ============ PÓS UDEMY (trilha Infra/Cloud/DevOps/Security) ============ */
+const UD_MODULES=[
+{name:'Linux & Administração',area:'Infra',hours:28,checkpoint:'NOC Jr.',project:'Ubuntu Server com SSH, Nginx, firewall, logs e script Bash',course:'Aprenda tudo sobre o Linux! — Vitor Mazuco',study:['Terminal e filesystem','Permissões, usuários e grupos','Processos e systemd','Pacotes e SSH','Rede e firewall','Logs, Bash e hardening'],skip:['História extensa','GUI básica já dominada','Tópicos avançados fora do objetivo']},
+{name:'NOC & Zabbix',area:'NOC',hours:22,checkpoint:'NOC Jr.',project:'Zabbix + Grafana monitorando Windows e Linux',course:'Curso de Zabbix 7! — Vitor Mazuco',study:['Hosts, templates, items e triggers','Discovery e agentes','SNMP/ICMP','Dashboards e alertas','Grafana e API'],skip:['Integrações sem relação com o laboratório']},
+{name:'Windows Server & Infra',area:'Infra',hours:18,checkpoint:'Infra Jr.',project:'AD, DNS, DHCP, GPO, file server e automações PowerShell',course:'Revisão prática de Windows Server / AD / PowerShell',study:['AD DS','DNS e DHCP','GPO e permissões','Shares','PowerShell e troubleshooting'],skip:['Conteúdo introdutório que você já domina']},
+{name:'AWS Cloud',area:'Cloud',hours:24,checkpoint:'Cloud Jr.',project:'AWS 3-tier: Load Balancer + EC2 + RDS + CloudWatch',course:'AWS Solutions Architect Associate SAA-C03 — Marlon Anesi',study:['IAM','EC2 e S3','VPC, subnets e rotas','IGW, NAT e Security Groups','RDS, Load Balancer e Auto Scaling','CloudWatch, Route 53 e custos'],skip:['Detalhes de serviços que não entram no projeto']},
+{name:'Git & GitHub',area:'DevOps',hours:8,checkpoint:'Base DevOps',project:'Repositório profissional com README, issues e documentação',course:'Git e GitHub — fundamentos práticos',study:['Commit, push, pull e branches','Merge, revert e stash','Pull Requests','README e Issues'],skip:['História extensa do Git']},
+{name:'Docker',area:'DevOps',hours:17,checkpoint:'DevOps Jr.',project:'Docker Compose com Nginx, aplicação e PostgreSQL',course:'Docker — Dominando criação e gerenciamento de containers',study:['Images e containers','Dockerfile','Volumes e networks','Compose','Registry, logs e troubleshooting'],skip:['Repetição desnecessária de Linux']},
+{name:'Terraform',area:'IaC',hours:18,checkpoint:'Cloud/DevOps Jr.',project:'Recriar a infraestrutura AWS do projeto usando Terraform',course:'Terraform para AWS — Mateus Müller',study:['Providers e resources','VPC, subnets e rotas','Variables e outputs','Modules','State e backend remoto'],skip:['Cloud providers fora do foco inicial']},
+{name:'CI/CD',area:'DevOps',hours:8,checkpoint:'DevOps Jr.',project:'Pipeline automático de teste, build de imagem e deploy',course:'GitHub Actions: Guia Completo — Do Zero ao Deploy',study:['Workflows YAML','Jobs, steps e triggers','Secrets e artifacts','Environments','Build Docker e deploy'],skip:['Integrações que não serão usadas']},
+{name:'Kubernetes',area:'DevOps',hours:24,checkpoint:'DevOps/SRE Jr.',project:'Cluster Kubernetes com deploy, probes, ingress e monitoramento',course:'Escolher/revalidar curso em 2027',study:['Pods, Deployments e Services','ConfigMaps e Secrets','Ingress e volumes','RBAC e namespaces','Probes, HPA, Helm e troubleshooting'],skip:['Aprofundamento em providers não utilizados']},
+{name:'Observabilidade',area:'SRE',hours:20,checkpoint:'SRE/DevOps',project:'Stack de métricas, logs, alertas e dashboards',course:'Trilha prática Zabbix + Grafana + Prometheus + CloudWatch',study:['Métricas e logs','Dashboards e alertas','Prometheus e Grafana','CloudWatch','SLI/SLO básicos'],skip:['Teoria SRE avançada antes da prática']},
+{name:'DevSecOps',area:'Security',hours:8,checkpoint:'DevSecOps Jr.',project:'Pipeline com SAST, SCA, IaC e container scanning',course:'DevSecOps com GitHub Actions',study:['SAST e DAST','SCA/dependências','IaC scanning','Container scanning','Secrets e security gates'],skip:['Ferramentas fora do pipeline principal']},
+{name:'SOC / Wazuh / Cloud Security',area:'Security',hours:24,checkpoint:'SOC Jr. / Cloud Security Jr.',project:'Mini SOC com Wazuh, Windows/Sysmon, Linux e investigação',course:'Curso completo de Wazuh — revalidar em 2028',study:['Wazuh server e agents','Windows + Sysmon','Linux/Auditd','Alertas e threat hunting','MITRE ATT&CK','Vulnerabilidades e resposta'],skip:['Integrações avançadas antes da base']}
+];
+const UD_SCHEDULE=[['Out/2026','Linux','Ubuntu Server e laboratório','Base Infra'],['Nov/2026','Zabbix + Grafana','Monitoramento e alertas','Começar candidaturas NOC Jr.'],['Dez/2026','Windows Server + PowerShell','AD, DNS, DHCP e GPO','Infra Jr.'],['Jan/2027','AWS','Projeto AWS 3-tier','Começar candidaturas Cloud Jr.'],['Fev/2027','Git + Docker','Repo profissional e Compose','DevOps base'],['Mar/2027','Terraform','Infra AWS como código','Cloud/DevOps Jr.'],['Abr/2027','CI/CD','Pipeline GitHub Actions','DevOps Jr.'],['Mai–Jun/2027','Kubernetes','Cluster, deploy e troubleshooting','DevOps/SRE'],['Jul–Set/2027','Observabilidade','Métricas, logs e alertas','SRE/DevOps'],['Out–Dez/2027','DevSecOps','Pipeline com security gates','DevSecOps'],['Jan–Jun/2028','SOC + Wazuh','Mini SOC','SOC/Cloud Security'],['Jul–Dez/2028','Certificações + capstone','Projetos avançados','Consolidação'],['2029','Especialização','Projetos avançados','Pleno → Sênior'],['2030+','Cloud/SRE/Security avançado','Especialização contínua','Mercado internacional como possibilidade']];
+const UD_JOBS=[['NOC Jr.','Linux, redes, Zabbix e troubleshooting','Lab Zabbix/Grafana','R$ 2,5–4 mil','Após módulo 2'],['Infra Jr.','Linux, Windows/AD, DNS/DHCP, PowerShell','Lab Windows','R$ 3–5 mil','Após módulo 3'],['Cloud Jr.','AWS, IAM, VPC, EC2, RDS e CloudWatch','AWS 3-tier','R$ 4–6 mil','Após módulo 4'],['DevOps Jr.','Git, Docker, Terraform e CI/CD','Pipeline + IaC','R$ 4–7 mil','Após módulo 8'],['Cloud/DevOps Pleno','Cloud, IaC, containers, CI/CD e observabilidade','Capstone completo','R$ 6–12 mil','Médio prazo'],['Cloud Security / SOC','SIEM, logs, IAM, incidentes e cloud security','Mini SOC','R$ 7–12 mil+','Após módulo 12']];
+const UD_CERTS=[['AWS Solutions Architect Associate','Após AWS + projeto','Alta'],['AWS Cloud Practitioner','Opcional, entrada mais leve','Opcional'],['CKA','Após Kubernetes e prática','Futuro'],['Security+ ou equivalente','Após base de segurança','Futuro'],['Cloud Security','Após Cloud + Security','Futuro']];
+const UD_SHOP=[['Linux',30,'Agora ou próxima promoção'],['Zabbix',30,'Prioridade imediata'],['AWS SAA',35,'Comprar perto de Jan/2027'],['Docker',30,'Comprar perto de Fev/2027'],['Terraform',35,'Comprar perto de Mar/2027'],['GitHub Actions',30,'Comprar perto de Abr/2027'],['Kubernetes',40,'Revalidar curso em 2027'],['Wazuh',35,'Revalidar curso em 2028']];
+function udPct(i){return Math.max(0,Math.min(100,Number(S.udemy.progress[i]||0)))}
+function udTotal(){return Math.round(UD_MODULES.reduce((a,_,i)=>a+udPct(i),0)/UD_MODULES.length)}
+function udDone(){return UD_MODULES.filter((_,i)=>udPct(i)===100).length}
+function udProjDone(){return Object.values(S.udemy.projStatus).filter(x=>x==='Concluído').length}
+function udNextIdx(){const i=UD_MODULES.findIndex((_,i)=>udPct(i)<100);return i<0?UD_MODULES.length-1:i}
+function udSetPct(i,v){S.udemy.progress[i]=Math.max(0,Math.min(100,Math.round(+v)||0));queueWrite('udemy');render()}
+function udFinish(i){S.udemy.progress[i]=100;queueWrite('udemy');render()}
+function udSetProj(i,field,v){
+  const map={status:'projStatus',link:'projLink',notes:'projNotes'};S.udemy[map[field]][i]=v;queueWrite('udemy');
+  if(field==='status')render();
+}
+function udSetCert(i,v){S.udemy.certStatus[i]=v;queueWrite('udemy');render()}
+function udSetShop(i,field,v){const p=S.udemy.purchases[i]||(S.udemy.purchases[i]={});p[field]=v;queueWrite('udemy')}
+function udAddJournal(data){
+  if(!data.module){S.udErr='Escolha o módulo.';render();return}
+  const hrs=parseFloat(String(data.hours).replace(',','.'));
+  if(!isFinite(hrs)||hrs<=0){S.udErr='Informe horas válidas (ex.: 1,5).';render();return}
+  if(!data.notes.trim()){S.udErr='Conte o que estudou ou praticou.';render();return}
+  S.udemy.journal.unshift({id:uid8(),date:data.date||todayK(),module:data.module,hours:Math.round(hrs*4)/4,difficulty:+data.difficulty||3,notes:data.notes.trim().slice(0,600),ts:Date.now()});
+  S.udErr='';queueWrite('udemy');render();
+}
+function udDelJournal(id){S.udemy.journal=S.udemy.journal.filter(x=>x.id!==id);S.delId=null;queueWrite('udemy');render()}
+function udJournalFor(ym){return S.udemy.journal.filter(j=>!ym||j.date.slice(0,7)===ym)}
+const udBar=p=>`<div class="pbarmini"><i style="width:${p}%"></i></div>`;
+const udBadge=i=>udPct(i)===100?'<span class="pill ok">Concluído</span>':udPct(i)>0?'<span class="pill">Em andamento</span>':'<span class="pill" style="opacity:.6">Não iniciado</span>';
+function renderUdDash(){
+  const i=udNextIdx(),m=UD_MODULES[i],hrs=S.udemy.journal.reduce((a,r)=>a+(+r.hours||0),0);
+  return`<div class="kpis">
+    <div class="kpi"><div class="k">Progresso geral</div><div class="v">${udTotal()}<span class="muted" style="font-size:15px;font-weight:500">%</span></div><div class="s">${udBar(udTotal())}</div></div>
+    <div class="kpi"><div class="k">Módulos concluídos</div><div class="v">${udDone()}<span class="muted" style="font-size:15px;font-weight:500"> / ${UD_MODULES.length}</span></div><div class="s">trilha completa</div></div>
+    <div class="kpi"><div class="k">Projetos concluídos</div><div class="v">${udProjDone()}<span class="muted" style="font-size:15px;font-weight:500"> / ${UD_MODULES.length}</span></div><div class="s">práticos</div></div>
+    <div class="kpi"><div class="k">Horas registradas</div><div class="v">${hrs.toFixed(1)}<span class="muted" style="font-size:15px;font-weight:500">h</span></div><div class="s">${S.udemy.journal.length} ${S.udemy.journal.length===1?'registro':'registros'}</div></div>
+  </div>
+  <section class="card">
+    <h3>🚀 Próximo passo</h3>
+    <div class="entry-topic" style="font-size:17px">${i+1}. ${esc(m.name)}</div>
+    <div class="muted sm">Checkpoint: ${esc(m.checkpoint)} · ${m.hours}h-alvo · área ${esc(m.area)}</div>
+    ${udBar(udPct(i))}<div class="muted sm" style="margin:4px 0 10px">${udPct(i)}% concluído</div>
+    <div class="muted sm"><b>Projeto:</b> ${esc(m.project)}</div>
+    <button class="btn" style="margin-top:12px" data-a="ud-tab" data-ut="trilha">Abrir trilha</button>
+  </section>
+  <section class="card"><h3>📌 Método de estudo sugerido</h3>
+    <div class="chips"><span class="chip">Curso<b>30%</b></span><span class="chip">Laboratório / projeto<b>50%</b></span><span class="chip">Documentação e revisão<b>20%</b></span></div>
+    <p class="muted sm" style="margin-top:10px">Critério de conclusão: considere o módulo pronto quando conseguir refazer o laboratório sozinho, sem consultar o curso.</p>
+  </section>`;
+}
+function renderUdTrack(){
+  if(S.udOpen!=null){
+    const i=S.udOpen,m=UD_MODULES[i];
+    return`<section class="card">
+      <button class="btn ghost sm2" data-a="ud-back">← Voltar à trilha</button>
+      <div class="entry-topic" style="margin-top:12px">${i+1}. ${esc(m.name)}</div>
+      <div class="muted sm">${esc(m.area)} · ${m.hours}h-alvo · ${esc(m.checkpoint)}</div>
+      <h3 style="margin-top:16px">Curso recomendado</h3><p>${esc(m.course)}</p>
+      <h3>O que estudar</h3>${m.study.map(x=>`<div class="dt-task"><span class="muted">○</span>${esc(x)}</div>`).join('')}
+      <h3 style="margin-top:14px">O que pode pular/reduzir</h3>${m.skip.map(x=>`<div class="muted sm">• ${esc(x)}</div>`).join('')}
+      <h3 style="margin-top:14px">Projeto obrigatório</h3><p>${esc(m.project)}</p>
+      <label class="lb" for="udPctInp" style="margin-top:10px">Progresso (%)</label>
+      <div style="display:flex;gap:8px;align-items:center"><input type="number" id="udPctInp" min="0" max="100" value="${udPct(i)}" style="max-width:110px"><button class="btn" data-a="ud-save-pct" data-i="${i}">Salvar</button><button class="btn ghost" data-a="ud-finish" data-i="${i}">Marcar 100%</button></div>
+    </section>`;
+  }
+  return`<div class="head" style="margin-bottom:2px"><h2 style="margin:0">🎓 Trilha completa — ${udTotal()}%</h2></div>
+  ${UD_MODULES.map((m,i)=>`<section class="card">
+    <div class="shead"><span><span class="chip" style="margin-right:6px">${esc(m.area)}</span>${udBadge(i)}<div class="entry-topic" style="margin:6px 0 2px">${i+1}. ${esc(m.name)}</div><div class="muted sm">Checkpoint: ${esc(m.checkpoint)} · ${m.hours}h-alvo</div></span></div>
+    <div class="muted sm" style="margin:6px 0"><b>Projeto:</b> ${esc(m.project)}</div>
+    ${udBar(udPct(i))}<div class="muted sm" style="margin-top:4px">${udPct(i)}%</div>
+    <div style="display:flex;gap:8px;margin-top:10px"><button class="btn ghost sm2" data-a="ud-open" data-i="${i}">Detalhes</button><button class="btn sm2" data-a="ud-finish" data-i="${i}">100%</button></div>
+  </section>`).join('')}`;
+}
+function renderUdProjects(){
+  return UD_MODULES.map((m,i)=>`<section class="card">
+    <span class="chip">${i+1}. ${esc(m.name)}</span>
+    <div class="entry-topic" style="font-size:15px;margin:8px 0">${esc(m.project)}</div>
+    <div class="muted sm" style="margin-bottom:10px">Entregáveis: ambiente funcional, README, evidências e lições aprendidas.</div>
+    <label class="lb">Status</label>
+    <select class="sel" data-ud="proj-status" data-i="${i}">${['Não iniciado','Em andamento','Concluído'].map(x=>`<option ${x===(S.udemy.projStatus[i]||'Não iniciado')?'selected':''}>${x}</option>`).join('')}</select>
+    <label class="lb" style="margin-top:10px">Link GitHub / evidência</label><input type="text" data-ud="proj-link" data-i="${i}" placeholder="Cole o link aqui" value="${esc(S.udemy.projLink[i]||'')}">
+    <label class="lb" style="margin-top:10px">Observações</label><textarea data-ud="proj-notes" data-i="${i}" style="min-height:70px">${esc(S.udemy.projNotes[i]||'')}</textarea>
+  </section>`).join('');
+}
+function renderUdSchedule(){
+  return`<section class="card"><h2 style="margin-top:0">📅 Cronograma proposto</h2>
+  ${UD_SCHEDULE.map(x=>`<div class="sentry"><div class="shead"><b style="color:var(--acc)">${esc(x[0])}</b><span class="pill">${esc(x[3])}</span></div><div style="font-weight:600">${esc(x[1])}</div><div class="muted sm">${esc(x[2])}</div></div>`).join('')}
+  <p class="muted sm" style="margin-top:12px">Cronograma flexível: ajuste à sua carga horária, trabalho e entrevistas. Priorize prática e candidaturas quando atingir os checkpoints.</p>
+  </section>`;
+}
+function renderUdCareer(){
+  return`<section class="card"><h2 style="margin-top:0">💼 Checkpoints de carreira</h2>
+  ${UD_JOBS.map(j=>`<div class="sentry"><div class="shead"><b>${esc(j[0])}</b><span class="pill ok">${esc(j[4])}</span></div><div class="muted sm">${esc(j[1])}</div><div class="muted sm">Prova prática: ${esc(j[2])}</div><div style="color:var(--ok);font-weight:650;margin-top:4px">${esc(j[3])}</div></div>`).join('')}
+  <p class="muted sm" style="margin-top:12px">Faixas aproximadas para planejamento, não garantia salarial. Variam por região, empresa, senioridade, inglês e regime de contratação.</p>
+  </section>`;
+}
+function renderUdCerts(){
+  return`<div class="head" style="margin-bottom:2px"><h2 style="margin:0">📜 Certificações</h2></div>
+  ${UD_CERTS.map((c,i)=>`<section class="card"><div class="shead"><b>${esc(c[0])}</b></div><div class="muted sm">${esc(c[1])} · prioridade ${esc(c[2])}</div>
+    <label class="lb" style="margin-top:10px">Status</label><select class="sel" data-ud="cert" data-i="${i}">${['Considerar','Planejada','Estudando','Concluída'].map(v=>`<option ${v===(S.udemy.certStatus[i]||'Considerar')?'selected':''}>${v}</option>`).join('')}</select>
+  </section>`).join('')}`;
+}
+function renderUdJournal(){
+  const list=S.udemy.journal;
+  return`<section class="card"><h3>⏱️ Registrar estudo</h3>
+    <label class="lb">Data</label><input type="date" id="udDate" max="${todayK()}" value="${todayK()}">
+    <div class="grid2" style="grid-template-columns:1fr 1fr;margin-top:10px">
+      <div><label class="lb">Horas</label><input type="text" inputmode="decimal" id="udHours" placeholder="Ex.: 1,5"></div>
+      <div><label class="lb">Dificuldade (1–5)</label><input type="number" id="udDiff" min="1" max="5" value="3"></div>
+    </div>
+    <label class="lb" style="margin-top:10px">Módulo</label><select class="sel" id="udModule">${UD_MODULES.map(m=>`<option>${esc(m.name)}</option>`).join('')}</select>
+    <label class="lb" style="margin-top:10px">O que estudou/praticou</label><textarea id="udNotes" style="min-height:80px"></textarea>
+    <div class="err">${esc(S.udErr||'')}</div>
+    <button class="btn" style="margin-top:10px" data-a="ud-journal-add">Registrar estudo</button>
+  </section>
+  <section class="card"><div class="head" style="margin-bottom:8px"><h2 style="margin:0">Histórico</h2><span class="pill">${list.length}</span></div>
+  ${list.length?list.map(r=>{const arm=S.delId===r.id;return`<div class="sentry"><div class="shead"><span><b>${esc(r.module)}</b><div class="muted sm">${fFull(r.date)} · ${r.hours}h · dificuldade ${r.difficulty}/5</div></span>${arm?`<button class="mini danger arm" data-a="ud-journal-del" data-id="${r.id}">Confirmar</button>`:`<button class="mini danger" data-a="ud-journal-del" data-id="${r.id}" aria-label="Excluir">${TRASH}</button>`}</div><div class="muted sm" style="white-space:pre-wrap">${esc(r.notes)}</div></div>`}).join(''):'<div class="empty">Nenhum estudo registrado ainda.</div>'}
+  </section>`;
+}
+function renderUdShop(){
+  return`<section class="card"><b>Preço-alvo Udemy:</b> <span class="muted sm">R$ 20–30 excelente · R$ 30–50 aceitável · R$ 50–70 só se excepcional · acima de R$ 80 evitar.</span><p class="muted sm" style="margin-top:8px">Os preços variam. Revalide os cursos próximos à data de estudo, especialmente Kubernetes e Wazuh.</p></section>
+  ${UD_SHOP.map((x,i)=>{const p=S.udemy.purchases[i]||{};return`<section class="card"><div class="shead"><b>${esc(x[0])}</b><span class="muted sm">alvo R$ ${x[1]}</span></div><div class="muted sm" style="margin-bottom:8px">${esc(x[2])}</div>
+    <div class="grid2" style="grid-template-columns:1fr 1fr"><div><label class="lb">Preço encontrado (R$)</label><input type="text" inputmode="decimal" data-ud="shop-price" data-i="${i}" value="${esc(p.price||'')}"></div><div><label class="lb">Data</label><input type="date" data-ud="shop-date" data-i="${i}" value="${esc(p.date||'')}"></div></div>
+    <label class="lb" style="margin-top:10px">Comprar?</label><select class="sel" data-ud="shop-decision" data-i="${i}">${['Não','Talvez','Sim'].map(v=>`<option ${v===(p.decision||'Não')?'selected':''}>${v}</option>`).join('')}</select>
+  </section>`}).join('')}`;
+}
+function renderUdemy(){
+  const tabs=[['dash','📊 Dashboard'],['trilha','🎓 Trilha'],['projetos','🧪 Projetos'],['cronograma','📅 Cronograma'],['carreira','💼 Carreira'],['certs','📜 Certificações'],['diario','⏱️ Diário'],['compras','💰 Compras']];
+  const sub=`<div class="fsubtabs">${tabs.map(x=>`<button class="fsubtab ${S.udTab===x[0]?'on':''}" data-a="ud-tab" data-ut="${x[0]}">${x[1]}</button>`).join('')}</div>`;
+  const body=S.udTab==='dash'?renderUdDash():S.udTab==='trilha'?renderUdTrack():S.udTab==='projetos'?renderUdProjects():S.udTab==='cronograma'?renderUdSchedule():S.udTab==='carreira'?renderUdCareer():S.udTab==='certs'?renderUdCerts():S.udTab==='diario'?renderUdJournal():renderUdShop();
+  $('#view').innerHTML=sub+body;
+}
+function udField(el){
+  const f=el.dataset.ud,i=+el.dataset.i,v=el.value;
+  if(f==='proj-status')udSetProj(i,'status',v);
+  else if(f==='proj-link')udSetProj(i,'link',v);
+  else if(f==='proj-notes')udSetProj(i,'notes',v);
+  else if(f==='cert')udSetCert(i,v);
+  else if(f==='shop-price')udSetShop(i,'price',v);
+  else if(f==='shop-date')udSetShop(i,'date',v);
+  else if(f==='shop-decision')udSetShop(i,'decision',v);
+}
+function udAction(a,el){
+  switch(a){
+    case'ud-tab':S.udTab=el.dataset.ut;S.udOpen=null;render();break;
+    case'ud-open':S.udOpen=+el.dataset.i;render();break;
+    case'ud-back':S.udOpen=null;render();break;
+    case'ud-save-pct':{const i2=$('#udPctInp');udSetPct(+el.dataset.i,i2?i2.value:0);break}
+    case'ud-finish':udFinish(+el.dataset.i);break;
+    case'ud-journal-add':
+      udAddJournal({date:$('#udDate').value,module:$('#udModule').value,hours:$('#udHours').value,difficulty:$('#udDiff').value,notes:$('#udNotes').value});break;
+    case'ud-journal-del':{const id=el.dataset.id;if(S.delId===id){udDelJournal(id)}else{S.delId=id;render();setTimeout(()=>{if(S.delId===id){S.delId=null;if(S.tab==='study')softRender()}},3000)}break}
+  }
+}
 /* ============ render geral ============ */
 function render(){
   renderTop();
@@ -1784,7 +1984,7 @@ document.addEventListener('click',ev=>{
   const a=el.dataset.a,id=el.dataset.id;
   switch(a){
     case'tab':S.tab=el.dataset.t;S.editId=null;S.delId=null;if(S.tab==='study'){S.viewDay=todayK();S.studyEdit=null}else if(S.tab==='checks'){S.checkDay=todayK()}else if(S.tab==='treino'){S.trDay=todayK();S.trErr=''}else if(S.tab==='fin'){S.finEdit=null;S.finErr=''}scrollTo({top:0});render();break;
-    case'go-study':S.tab='study';S.viewDay=todayK();S.studyEdit=null;S.studyMode='general';try{localStorage.setItem('fnx-studymode','general')}catch(e){};scrollTo({top:0});render();break;
+    case'go-study':S.tab='study';S.viewDay=todayK();S.udTab='diario';S.studyEdit=null;S.studyMode='udemy';try{localStorage.setItem('fnx-studymode','udemy')}catch(e){};scrollTo({top:0});render();break;
     case'tr-tab':
     case'tr-prev':
     case'tr-next':
@@ -1814,6 +2014,14 @@ document.addEventListener('click',ev=>{
     case'fin-del':
     case'fin-save':
       finAction(a,el);break;
+    case'ud-tab':
+    case'ud-open':
+    case'ud-back':
+    case'ud-save-pct':
+    case'ud-finish':
+    case'ud-journal-add':
+    case'ud-journal-del':
+      udAction(a,el);break;
     case'copy-summary':{
       const txt=buildSummaryText(),msg=$('#copyMsg');
       const ok=()=>{if(msg){msg.textContent='Copiado! Cole numa conversa com o Claude.';setTimeout(()=>{if(msg)msg.textContent=''},3500)}};
@@ -1838,7 +2046,7 @@ document.addEventListener('click',ev=>{
     case'check-today':S.checkDay=todayK();S.delId=null;render();break;
     case'add-once':{const i=$('#onceTask');S.onceText=i.value;addOnceTask(el.dataset.k,i.value);const n=$('#onceTask');if(n)n.focus()}break;
     case'del-once':if(S.delId===id){delOnceTask(el.dataset.k,id)}else{S.delId=id;render();setTimeout(()=>{if(S.delId===id){S.delId=null;if(S.tab==='checks')softRender()}},3000)}break;
-    case'go-study-day':S.tab='study';S.viewDay=el.dataset.k;S.studyEdit=null;S.studyMode='general';try{localStorage.setItem('fnx-studymode','general')}catch(e){};scrollTo({top:0});render();break;
+    case'go-study-day':S.tab='study';S.viewDay=el.dataset.k;S.udTab='diario';S.studyEdit=null;S.studyMode='udemy';try{localStorage.setItem('fnx-studymode','udemy')}catch(e){};scrollTo({top:0});render();break;
     case'del':if(S.delId===id){delTask(id)}else{S.delId=id;render();setTimeout(()=>{if(S.delId===id){S.delId=null;if(S.tab==='checks')softRender()}},3000)}break;
     case'add-task':{const i=$('#newTask'),ai=$('#newAlarmTime');addTask(i.value,ai?ai.value:'');askNotifIfNeeded();const n=$('#newTask');if(n)n.focus()}break;
     case'study-prev':S.viewDay=addDays(S.viewDay,-1);S.studyEdit=null;S.studyErr='';render();break;
@@ -1853,7 +2061,7 @@ document.addEventListener('click',ev=>{
       if(!tp.trim()||!tx.trim()){S.studyErr='Preencha o tema e o que você aprendeu.';$('#stErr').textContent=S.studyErr;return}
       if(sid==='new')addStudyEntry(S.viewDay,tp,tx,tg);else editStudyEntry(S.viewDay,sid,tp,tx,tg);
       break}
-    case'open-study':S.tab='study';S.viewDay=el.dataset.k;S.studyEdit=null;S.studyMode='general';try{localStorage.setItem('fnx-studymode','general')}catch(e){};scrollTo({top:0});render();break;
+    case'open-study':S.tab='study';S.viewDay=el.dataset.k;S.udTab='diario';S.studyEdit=null;S.studyMode='udemy';try{localStorage.setItem('fnx-studymode','udemy')}catch(e){};scrollTo({top:0});render();break;
     case'hist-more':S.histN+=20;renderHist();break;
     case'per':S.period=el.dataset.p;S.selDay=null;render();break;
     case'nav':{const d=+el.dataset.d;
@@ -1951,6 +2159,7 @@ document.addEventListener('toggle',e=>{if(e.target.id==='pset')pOpen=e.target.op
 document.addEventListener('change',ev=>{
   const tg=ev.target,ds=tg.dataset||{};
   if(ds.pf){planField(tg);return}
+  if(ds.ud){udField(tg);return}
   if(ds.tr){trSetVal(S.trDay,ds.ex,+ds.i,ds.tr,tg.value);return}
   if(tg.id==='trExSel'){S.trEx=tg.value;render();return}
   if(tg.id==='trJump'&&tg.value){S.trDay=tg.value>todayK()?todayK():tg.value;S.trErr='';render();return}
