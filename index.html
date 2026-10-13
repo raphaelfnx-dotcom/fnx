@@ -419,7 +419,7 @@ const BELL='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="
 /* ============ estado ============ */
 const DEFAULT_FOCUS={goal:60,study:[],questions:[],errors:[],topicDone:{}};
 const DEFAULT_FIN={entries:[],cats:['Moradia','Alimentação','Transporte','Lazer','Saúde','Assinaturas','Outros']};
-const DEFAULT_UDEMY={progress:{},projStatus:{},projLink:{},projNotes:{},certStatus:{},purchases:{},journal:[]};
+const DEFAULT_UDEMY={checks:{},projStatus:{},projLink:{},projNotes:{},certStatus:{},purchases:{},journal:[]};
 const S={cfg:{tasks:[],start:null},months:{},focus:clone(DEFAULT_FOCUS),fin:clone(DEFAULT_FIN),tab:'checks',focusTab:'dash',viewDay:todayK(),checkDay:todayK(),studyEdit:null,editId:null,delId:null,
   period:'week',anchor:todayK(),selDay:null,histQ:'',histN:15,studyErr:'',newAlarm:null,editAlarm:undefined,notifDismiss:false,onceText:'',focusErrQ:'',focusSubFilt:'',trDay:todayK(),trTab:'log',trPick:{},trEx:null,trPeriod:'week',trAnchor:todayK(),trErr:'',focusExam:(localStorage.getItem('fnx-exam')||'ata'),studyMode:(localStorage.getItem('fnx-studymode')||'udemy'),
   finMonth:todayK().slice(0,7),finEdit:null,finDraft:null,finType:'expense',finErr:'',
@@ -1796,36 +1796,38 @@ function finAction(a,el){
 }
 /* ============ PÓS UDEMY (trilha Infra/Cloud/DevOps/Security) ============ */
 const UD_MODULES=[
-{name:'Linux & Administração',area:'Infra',hours:28,checkpoint:'NOC Jr.',project:'Ubuntu Server com SSH, Nginx, firewall, logs e script Bash',course:'Aprenda tudo sobre o Linux! — Vitor Mazuco',study:['Terminal e filesystem','Permissões, usuários e grupos','Processos e systemd','Pacotes e SSH','Rede e firewall','Logs, Bash e hardening'],skip:['História extensa','GUI básica já dominada','Tópicos avançados fora do objetivo']},
-{name:'NOC & Zabbix',area:'NOC',hours:22,checkpoint:'NOC Jr.',project:'Zabbix + Grafana monitorando Windows e Linux',course:'Curso de Zabbix 7! — Vitor Mazuco',study:['Hosts, templates, items e triggers','Discovery e agentes','SNMP/ICMP','Dashboards e alertas','Grafana e API'],skip:['Integrações sem relação com o laboratório']},
-{name:'Windows Server & Infra',area:'Infra',hours:18,checkpoint:'Infra Jr.',project:'AD, DNS, DHCP, GPO, file server e automações PowerShell',course:'Revisão prática de Windows Server / AD / PowerShell',study:['AD DS','DNS e DHCP','GPO e permissões','Shares','PowerShell e troubleshooting'],skip:['Conteúdo introdutório que você já domina']},
-{name:'AWS Cloud',area:'Cloud',hours:24,checkpoint:'Cloud Jr.',project:'AWS 3-tier: Load Balancer + EC2 + RDS + CloudWatch',course:'AWS Solutions Architect Associate SAA-C03 — Marlon Anesi',study:['IAM','EC2 e S3','VPC, subnets e rotas','IGW, NAT e Security Groups','RDS, Load Balancer e Auto Scaling','CloudWatch, Route 53 e custos'],skip:['Detalhes de serviços que não entram no projeto']},
-{name:'Git & GitHub',area:'DevOps',hours:8,checkpoint:'Base DevOps',project:'Repositório profissional com README, issues e documentação',course:'Git e GitHub — fundamentos práticos',study:['Commit, push, pull e branches','Merge, revert e stash','Pull Requests','README e Issues'],skip:['História extensa do Git']},
-{name:'Docker',area:'DevOps',hours:17,checkpoint:'DevOps Jr.',project:'Docker Compose com Nginx, aplicação e PostgreSQL',course:'Docker — Dominando criação e gerenciamento de containers',study:['Images e containers','Dockerfile','Volumes e networks','Compose','Registry, logs e troubleshooting'],skip:['Repetição desnecessária de Linux']},
-{name:'Terraform',area:'IaC',hours:18,checkpoint:'Cloud/DevOps Jr.',project:'Recriar a infraestrutura AWS do projeto usando Terraform',course:'Terraform para AWS — Mateus Müller',study:['Providers e resources','VPC, subnets e rotas','Variables e outputs','Modules','State e backend remoto'],skip:['Cloud providers fora do foco inicial']},
-{name:'CI/CD',area:'DevOps',hours:8,checkpoint:'DevOps Jr.',project:'Pipeline automático de teste, build de imagem e deploy',course:'GitHub Actions: Guia Completo — Do Zero ao Deploy',study:['Workflows YAML','Jobs, steps e triggers','Secrets e artifacts','Environments','Build Docker e deploy'],skip:['Integrações que não serão usadas']},
-{name:'Kubernetes',area:'DevOps',hours:24,checkpoint:'DevOps/SRE Jr.',project:'Cluster Kubernetes com deploy, probes, ingress e monitoramento',course:'Escolher/revalidar curso em 2027',study:['Pods, Deployments e Services','ConfigMaps e Secrets','Ingress e volumes','RBAC e namespaces','Probes, HPA, Helm e troubleshooting'],skip:['Aprofundamento em providers não utilizados']},
-{name:'Observabilidade',area:'SRE',hours:20,checkpoint:'SRE/DevOps',project:'Stack de métricas, logs, alertas e dashboards',course:'Trilha prática Zabbix + Grafana + Prometheus + CloudWatch',study:['Métricas e logs','Dashboards e alertas','Prometheus e Grafana','CloudWatch','SLI/SLO básicos'],skip:['Teoria SRE avançada antes da prática']},
-{name:'DevSecOps',area:'Security',hours:8,checkpoint:'DevSecOps Jr.',project:'Pipeline com SAST, SCA, IaC e container scanning',course:'DevSecOps com GitHub Actions',study:['SAST e DAST','SCA/dependências','IaC scanning','Container scanning','Secrets e security gates'],skip:['Ferramentas fora do pipeline principal']},
-{name:'SOC / Wazuh / Cloud Security',area:'Security',hours:24,checkpoint:'SOC Jr. / Cloud Security Jr.',project:'Mini SOC com Wazuh, Windows/Sysmon, Linux e investigação',course:'Curso completo de Wazuh — revalidar em 2028',study:['Wazuh server e agents','Windows + Sysmon','Linux/Auditd','Alertas e threat hunting','MITRE ATT&CK','Vulnerabilidades e resposta'],skip:['Integrações avançadas antes da base']}
+{id:'linux',name:'Linux & Administração',area:'Infra',hours:28,checkpoint:'NOC Jr.',project:'Ubuntu Server com SSH, Nginx, firewall, logs e script Bash',course:'Aprenda tudo sobre o Linux! — Vitor Mazuco',study:['Terminal e filesystem','Permissões, usuários e grupos','Processos e systemd','Pacotes e SSH','Rede e firewall','Logs, Bash e hardening'],skip:['História extensa','GUI básica já dominada','Tópicos avançados fora do objetivo']},
+{id:'redes',name:'Redes & Troubleshooting',area:'Infra',hours:30,checkpoint:'NOC Jr.',project:'Lab no Packet Tracer ou GNS3: VLANs, roteamento, DHCP/DNS e diagnóstico com ping, traceroute e Wireshark',course:'Curso preparatório de CCNA (escolher curso atual em português antes de comprar)',study:['OSI/TCP-IP e endereçamento IPv4/sub-redes','Switching, VLANs e trunk','Roteamento estático e OSPF','DHCP, DNS e NAT','ACLs e noções de segurança de rede','Troubleshooting com ping, traceroute e Wireshark'],skip:['Hardware e cabeamento antigo','Protocolos legados fora do exame']},
+{id:'zabbix',name:'NOC & Zabbix',area:'NOC',hours:22,checkpoint:'NOC Jr.',project:'Zabbix + Grafana monitorando Windows e Linux',course:'Curso de Zabbix 7! — Vitor Mazuco',study:['Hosts, templates, items e triggers','Discovery e agentes','SNMP/ICMP','Dashboards e alertas','Grafana e API'],skip:['Integrações sem relação com o laboratório']},
+{id:'windows',name:'Windows Server & Infra',area:'Infra',hours:18,checkpoint:'Infra Jr.',project:'AD, DNS, DHCP, GPO, file server e automações PowerShell',course:'Revisão prática de Windows Server / AD / PowerShell',study:['AD DS','DNS e DHCP','GPO e permissões','Shares','PowerShell e troubleshooting'],skip:['Conteúdo introdutório que você já domina']},
+{id:'aws',name:'AWS Cloud',area:'Cloud',hours:24,checkpoint:'Cloud Jr.',project:'AWS 3-tier: Load Balancer + EC2 + RDS + CloudWatch',course:'AWS Solutions Architect Associate SAA-C03 — Marlon Anesi',study:['IAM','EC2 e S3','VPC, subnets e rotas','IGW, NAT e Security Groups','RDS, Load Balancer e Auto Scaling','CloudWatch, Route 53 e custos'],skip:['Detalhes de serviços que não entram no projeto']},
+{id:'git',name:'Git & GitHub',area:'DevOps',hours:8,checkpoint:'Base DevOps',project:'Repositório profissional com README, issues e documentação',course:'Git e GitHub — fundamentos práticos',study:['Commit, push, pull e branches','Merge, revert e stash','Pull Requests','README e Issues'],skip:['História extensa do Git']},
+{id:'docker',name:'Docker',area:'DevOps',hours:17,checkpoint:'DevOps Jr.',project:'Docker Compose com Nginx, aplicação e PostgreSQL',course:'Docker — Dominando criação e gerenciamento de containers',study:['Images e containers','Dockerfile','Volumes e networks','Compose','Registry, logs e troubleshooting'],skip:['Repetição desnecessária de Linux']},
+{id:'terraform',name:'Terraform',area:'IaC',hours:18,checkpoint:'Cloud/DevOps Jr.',project:'Recriar a infraestrutura AWS do projeto usando Terraform',course:'Terraform para AWS — Mateus Müller',study:['Providers e resources','VPC, subnets e rotas','Variables e outputs','Modules','State e backend remoto'],skip:['Cloud providers fora do foco inicial']},
+{id:'cicd',name:'CI/CD',area:'DevOps',hours:8,checkpoint:'DevOps Jr.',project:'Pipeline automático de teste, build de imagem e deploy',course:'GitHub Actions: Guia Completo — Do Zero ao Deploy',study:['Workflows YAML','Jobs, steps e triggers','Secrets e artifacts','Environments','Build Docker e deploy'],skip:['Integrações que não serão usadas']},
+{id:'k8s',name:'Kubernetes',area:'DevOps',hours:24,checkpoint:'DevOps/SRE Jr.',project:'Cluster Kubernetes com deploy, probes, ingress e monitoramento',course:'Escolher/revalidar curso em 2027',study:['Pods, Deployments e Services','ConfigMaps e Secrets','Ingress e volumes','RBAC e namespaces','Probes, HPA, Helm e troubleshooting'],skip:['Aprofundamento em providers não utilizados']},
+{id:'observ',name:'Observabilidade',area:'SRE',hours:20,checkpoint:'SRE/DevOps',project:'Stack de métricas, logs, alertas e dashboards',course:'Trilha prática Zabbix + Grafana + Prometheus + CloudWatch',study:['Métricas e logs','Dashboards e alertas','Prometheus e Grafana','CloudWatch','SLI/SLO básicos'],skip:['Teoria SRE avançada antes da prática']},
+{id:'devsecops',name:'DevSecOps',area:'Security',hours:8,checkpoint:'DevSecOps Jr.',project:'Pipeline com SAST, SCA, IaC e container scanning',course:'DevSecOps com GitHub Actions',study:['SAST e DAST','SCA/dependências','IaC scanning','Container scanning','Secrets e security gates'],skip:['Ferramentas fora do pipeline principal']},
+{id:'soc',name:'SOC / Wazuh / Cloud Security',area:'Security',hours:24,checkpoint:'SOC Jr. / Cloud Security Jr.',project:'Mini SOC com Wazuh, Windows/Sysmon, Linux e investigação',course:'Curso completo de Wazuh — revalidar em 2028',study:['Wazuh server e agents','Windows + Sysmon','Linux/Auditd','Alertas e threat hunting','MITRE ATT&CK','Vulnerabilidades e resposta'],skip:['Integrações avançadas antes da base']}
 ];
-const UD_SCHEDULE=[['Out/2026','Linux','Ubuntu Server e laboratório','Base Infra'],['Nov/2026','Zabbix + Grafana','Monitoramento e alertas','Começar candidaturas NOC Jr.'],['Dez/2026','Windows Server + PowerShell','AD, DNS, DHCP e GPO','Infra Jr.'],['Jan/2027','AWS','Projeto AWS 3-tier','Começar candidaturas Cloud Jr.'],['Fev/2027','Git + Docker','Repo profissional e Compose','DevOps base'],['Mar/2027','Terraform','Infra AWS como código','Cloud/DevOps Jr.'],['Abr/2027','CI/CD','Pipeline GitHub Actions','DevOps Jr.'],['Mai–Jun/2027','Kubernetes','Cluster, deploy e troubleshooting','DevOps/SRE'],['Jul–Set/2027','Observabilidade','Métricas, logs e alertas','SRE/DevOps'],['Out–Dez/2027','DevSecOps','Pipeline com security gates','DevSecOps'],['Jan–Jun/2028','SOC + Wazuh','Mini SOC','SOC/Cloud Security'],['Jul–Dez/2028','Certificações + capstone','Projetos avançados','Consolidação'],['2029','Especialização','Projetos avançados','Pleno → Sênior'],['2030+','Cloud/SRE/Security avançado','Especialização contínua','Mercado internacional como possibilidade']];
-const UD_JOBS=[['NOC Jr.','Linux, redes, Zabbix e troubleshooting','Lab Zabbix/Grafana','R$ 2,5–4 mil','Após módulo 2'],['Infra Jr.','Linux, Windows/AD, DNS/DHCP, PowerShell','Lab Windows','R$ 3–5 mil','Após módulo 3'],['Cloud Jr.','AWS, IAM, VPC, EC2, RDS e CloudWatch','AWS 3-tier','R$ 4–6 mil','Após módulo 4'],['DevOps Jr.','Git, Docker, Terraform e CI/CD','Pipeline + IaC','R$ 4–7 mil','Após módulo 8'],['Cloud/DevOps Pleno','Cloud, IaC, containers, CI/CD e observabilidade','Capstone completo','R$ 6–12 mil','Médio prazo'],['Cloud Security / SOC','SIEM, logs, IAM, incidentes e cloud security','Mini SOC','R$ 7–12 mil+','Após módulo 12']];
-const UD_CERTS=[['AWS Solutions Architect Associate','Após AWS + projeto','Alta'],['AWS Cloud Practitioner','Opcional, entrada mais leve','Opcional'],['CKA','Após Kubernetes e prática','Futuro'],['Security+ ou equivalente','Após base de segurança','Futuro'],['Cloud Security','Após Cloud + Security','Futuro']];
-const UD_SHOP=[['Linux',30,'Agora ou próxima promoção'],['Zabbix',30,'Prioridade imediata'],['AWS SAA',35,'Comprar perto de Jan/2027'],['Docker',30,'Comprar perto de Fev/2027'],['Terraform',35,'Comprar perto de Mar/2027'],['GitHub Actions',30,'Comprar perto de Abr/2027'],['Kubernetes',40,'Revalidar curso em 2027'],['Wazuh',35,'Revalidar curso em 2028']];
-function udPct(i){return Math.max(0,Math.min(100,Number(S.udemy.progress[i]||0)))}
+const UD_SCHEDULE=[['Out/2026','Linux','Ubuntu Server e laboratório','Base Infra'],['Nov/2026','Redes (CCNA)','Lab de redes e troubleshooting','Base NOC'],['Dez/2026','Zabbix + Windows Server (ritmo acelerado)','Zabbix/Grafana e AD/PowerShell, aproveitando o que já usa no trabalho','Começar candidaturas NOC/Infra'],['Jan/2027','AWS','Projeto AWS 3-tier','Começar candidaturas Cloud Jr.'],['Fev/2027','Git + Docker','Repo profissional e Compose','DevOps base'],['Mar/2027','Terraform','Infra AWS como código','Cloud/DevOps Jr.'],['Abr/2027','CI/CD','Pipeline GitHub Actions','DevOps Jr.'],['Mai–Jun/2027','Kubernetes','Cluster, deploy e troubleshooting','DevOps/SRE'],['Jul–Set/2027','Observabilidade','Métricas, logs e alertas','SRE/DevOps'],['Out–Dez/2027','DevSecOps','Pipeline com security gates','DevSecOps'],['Jan–Jun/2028','SOC + Wazuh','Mini SOC','SOC/Cloud Security'],['Jul–Dez/2028','Certificações + capstone','Projetos avançados','Consolidação'],['2029','Especialização','Projetos avançados','Pleno → Sênior'],['2030+','Cloud/SRE/Security avançado','Especialização contínua','Mercado internacional como possibilidade']];
+const UD_JOBS=[['NOC Jr.','Linux, redes, Zabbix e troubleshooting','Lab Zabbix/Grafana','R$ 2,5–4 mil','Após módulo 3'],['Infra Jr.','Linux, Windows/AD, DNS/DHCP, PowerShell','Lab Windows','R$ 3–5 mil','Após módulo 4'],['Cloud Jr.','AWS, IAM, VPC, EC2, RDS e CloudWatch','AWS 3-tier','R$ 4–6 mil','Após módulo 5'],['DevOps Jr.','Git, Docker, Terraform e CI/CD','Pipeline + IaC','R$ 4–7 mil','Após módulo 9'],['Cloud/DevOps Pleno','Cloud, IaC, containers, CI/CD e observabilidade','Capstone completo','R$ 6–12 mil','Médio prazo'],['Cloud Security / SOC','SIEM, logs, IAM, incidentes e cloud security','Mini SOC','R$ 7–12 mil+','Após módulo 13']];
+const UD_CERTS=[['CCNA (ou Network+)','Após o módulo de Redes e o lab','Alta'],['LPIC-1 ou RHCSA','Após Linux e prática','Média'],['AWS Solutions Architect Associate','Após AWS + projeto','Alta'],['AWS Cloud Practitioner','Opcional, entrada mais leve','Opcional'],['CKA','Após Kubernetes e prática','Futuro'],['Security+ ou equivalente','Após base de segurança','Futuro'],['Cloud Security','Após Cloud + Security','Futuro']];
+const UD_SHOP=[['Linux',30,'Agora ou próxima promoção'],['Redes / CCNA',35,'Escolher curso atual antes de comprar'],['Zabbix',30,'Prioridade imediata'],['AWS SAA',35,'Comprar perto de Jan/2027'],['Docker',30,'Comprar perto de Fev/2027'],['Terraform',35,'Comprar perto de Mar/2027'],['GitHub Actions',30,'Comprar perto de Abr/2027'],['Kubernetes',40,'Revalidar curso em 2027'],['Wazuh',35,'Revalidar curso em 2028']];
+function udChecked(i,k){return !!S.udemy.checks[UD_MODULES[i].id+':'+k]}
+function udChecklistFrac(i){const m=UD_MODULES[i];if(!m.study.length)return 0;return m.study.filter((_,k)=>udChecked(i,k)).length/m.study.length}
+function udPct(i){const m=UD_MODULES[i],s=S.udemy.projStatus[m.id];return Math.round(70*udChecklistFrac(i)+30*(s==='Concluído'?1:s==='Em andamento'?.5:0))}
 function udTotal(){return Math.round(UD_MODULES.reduce((a,_,i)=>a+udPct(i),0)/UD_MODULES.length)}
 function udDone(){return UD_MODULES.filter((_,i)=>udPct(i)===100).length}
 function udProjDone(){return Object.values(S.udemy.projStatus).filter(x=>x==='Concluído').length}
 function udNextIdx(){const i=UD_MODULES.findIndex((_,i)=>udPct(i)<100);return i<0?UD_MODULES.length-1:i}
-function udSetPct(i,v){S.udemy.progress[i]=Math.max(0,Math.min(100,Math.round(+v)||0));queueWrite('udemy');render()}
-function udFinish(i){S.udemy.progress[i]=100;queueWrite('udemy');render()}
+function udToggleCheck(i,k,v){S.udemy.checks[UD_MODULES[i].id+':'+k]=!!v;queueWrite('udemy');render()}
 function udSetProj(i,field,v){
-  const map={status:'projStatus',link:'projLink',notes:'projNotes'};S.udemy[map[field]][i]=v;queueWrite('udemy');
+  const map={status:'projStatus',link:'projLink',notes:'projNotes'};S.udemy[map[field]][UD_MODULES[i].id]=v;queueWrite('udemy');
   if(field==='status')render();
 }
-function udSetCert(i,v){S.udemy.certStatus[i]=v;queueWrite('udemy');render()}
-function udSetShop(i,field,v){const p=S.udemy.purchases[i]||(S.udemy.purchases[i]={});p[field]=v;queueWrite('udemy')}
+function udSetCert(name,v){S.udemy.certStatus[name]=v;queueWrite('udemy');render()}
+function udSetShop(name,field,v){const p=S.udemy.purchases[name]||(S.udemy.purchases[name]={});p[field]=v;queueWrite('udemy')}
 function udAddJournal(data){
   if(!data.module){S.udErr='Escolha o módulo.';render();return}
   const hrs=parseFloat(String(data.hours).replace(',','.'));
@@ -1852,7 +1854,7 @@ function renderUdDash(){
     <div class="muted sm">Checkpoint: ${esc(m.checkpoint)} · ${m.hours}h-alvo · área ${esc(m.area)}</div>
     ${udBar(udPct(i))}<div class="muted sm" style="margin:4px 0 10px">${udPct(i)}% concluído</div>
     <div class="muted sm"><b>Projeto:</b> ${esc(m.project)}</div>
-    <button class="btn" style="margin-top:12px" data-a="ud-tab" data-ut="trilha">Abrir trilha</button>
+    <button class="btn" style="margin-top:12px" data-a="ud-open-dash" data-i="${i}">Abrir módulo</button>
   </section>
   <section class="card"><h3>📌 Método de estudo sugerido</h3>
     <div class="chips"><span class="chip">Curso<b>30%</b></span><span class="chip">Laboratório / projeto<b>50%</b></span><span class="chip">Documentação e revisão<b>20%</b></span></div>
@@ -1867,11 +1869,13 @@ function renderUdTrack(){
       <div class="entry-topic" style="margin-top:12px">${i+1}. ${esc(m.name)}</div>
       <div class="muted sm">${esc(m.area)} · ${m.hours}h-alvo · ${esc(m.checkpoint)}</div>
       <h3 style="margin-top:16px">Curso recomendado</h3><p>${esc(m.course)}</p>
-      <h3>O que estudar</h3>${m.study.map(x=>`<div class="dt-task"><span class="muted">○</span>${esc(x)}</div>`).join('')}
+      <h3>O que estudar</h3>${m.study.map((x,k)=>`<label class="topicitem"><input type="checkbox" data-a="ud-check" data-i="${i}" data-k="${k}" ${udChecked(i,k)?'checked':''}> <span style="${udChecked(i,k)?'color:var(--mut);text-decoration:line-through':''}">${esc(x)}</span></label>`).join('')}
       <h3 style="margin-top:14px">O que pode pular/reduzir</h3>${m.skip.map(x=>`<div class="muted sm">• ${esc(x)}</div>`).join('')}
       <h3 style="margin-top:14px">Projeto obrigatório</h3><p>${esc(m.project)}</p>
-      <label class="lb" for="udPctInp" style="margin-top:10px">Progresso (%)</label>
-      <div style="display:flex;gap:8px;align-items:center"><input type="number" id="udPctInp" min="0" max="100" value="${udPct(i)}" style="max-width:110px"><button class="btn" data-a="ud-save-pct" data-i="${i}">Salvar</button><button class="btn ghost" data-a="ud-finish" data-i="${i}">Marcar 100%</button></div>
+      <div class="entry-topic" style="margin-top:10px">Progresso: ${udPct(i)}%<span class="muted sm" style="font-weight:400"> (70% checklist + 30% projeto)</span></div>
+      ${udBar(udPct(i))}
+      <label class="lb" style="margin-top:12px">Status do projeto</label>
+      <select class="sel" data-ud="proj-status" data-i="${i}">${['Não iniciado','Em andamento','Concluído'].map(x=>`<option ${x===(S.udemy.projStatus[m.id]||'Não iniciado')?'selected':''}>${x}</option>`).join('')}</select>
     </section>`;
   }
   return`<div class="head" style="margin-bottom:2px"><h2 style="margin:0">🎓 Trilha completa — ${udTotal()}%</h2></div>
@@ -1879,7 +1883,7 @@ function renderUdTrack(){
     <div class="shead"><span><span class="chip" style="margin-right:6px">${esc(m.area)}</span>${udBadge(i)}<div class="entry-topic" style="margin:6px 0 2px">${i+1}. ${esc(m.name)}</div><div class="muted sm">Checkpoint: ${esc(m.checkpoint)} · ${m.hours}h-alvo</div></span></div>
     <div class="muted sm" style="margin:6px 0"><b>Projeto:</b> ${esc(m.project)}</div>
     ${udBar(udPct(i))}<div class="muted sm" style="margin-top:4px">${udPct(i)}%</div>
-    <div style="display:flex;gap:8px;margin-top:10px"><button class="btn ghost sm2" data-a="ud-open" data-i="${i}">Detalhes</button><button class="btn sm2" data-a="ud-finish" data-i="${i}">100%</button></div>
+    <div style="display:flex;gap:8px;margin-top:10px"><button class="btn ghost sm2" data-a="ud-open" data-i="${i}">Detalhes</button></div>
   </section>`).join('')}`;
 }
 function renderUdProjects(){
@@ -1888,9 +1892,9 @@ function renderUdProjects(){
     <div class="entry-topic" style="font-size:15px;margin:8px 0">${esc(m.project)}</div>
     <div class="muted sm" style="margin-bottom:10px">Entregáveis: ambiente funcional, README, evidências e lições aprendidas.</div>
     <label class="lb">Status</label>
-    <select class="sel" data-ud="proj-status" data-i="${i}">${['Não iniciado','Em andamento','Concluído'].map(x=>`<option ${x===(S.udemy.projStatus[i]||'Não iniciado')?'selected':''}>${x}</option>`).join('')}</select>
-    <label class="lb" style="margin-top:10px">Link GitHub / evidência</label><input type="text" data-ud="proj-link" data-i="${i}" placeholder="Cole o link aqui" value="${esc(S.udemy.projLink[i]||'')}">
-    <label class="lb" style="margin-top:10px">Observações</label><textarea data-ud="proj-notes" data-i="${i}" style="min-height:70px">${esc(S.udemy.projNotes[i]||'')}</textarea>
+    <select class="sel" data-ud="proj-status" data-i="${i}">${['Não iniciado','Em andamento','Concluído'].map(x=>`<option ${x===(S.udemy.projStatus[m.id]||'Não iniciado')?'selected':''}>${x}</option>`).join('')}</select>
+    <label class="lb" style="margin-top:10px">Link GitHub / evidência</label><input type="text" data-ud="proj-link" data-i="${i}" placeholder="Cole o link aqui" value="${esc(S.udemy.projLink[m.id]||'')}">
+    <label class="lb" style="margin-top:10px">Observações</label><textarea data-ud="proj-notes" data-i="${i}" style="min-height:70px">${esc(S.udemy.projNotes[m.id]||'')}</textarea>
   </section>`).join('');
 }
 function renderUdSchedule(){
@@ -1908,7 +1912,7 @@ function renderUdCareer(){
 function renderUdCerts(){
   return`<div class="head" style="margin-bottom:2px"><h2 style="margin:0">📜 Certificações</h2></div>
   ${UD_CERTS.map((c,i)=>`<section class="card"><div class="shead"><b>${esc(c[0])}</b></div><div class="muted sm">${esc(c[1])} · prioridade ${esc(c[2])}</div>
-    <label class="lb" style="margin-top:10px">Status</label><select class="sel" data-ud="cert" data-i="${i}">${['Considerar','Planejada','Estudando','Concluída'].map(v=>`<option ${v===(S.udemy.certStatus[i]||'Considerar')?'selected':''}>${v}</option>`).join('')}</select>
+    <label class="lb" style="margin-top:10px">Status</label><select class="sel" data-ud="cert" data-name="${esc(c[0])}">${['Considerar','Planejada','Estudando','Concluída'].map(v=>`<option ${v===(S.udemy.certStatus[c[0]]||'Considerar')?'selected':''}>${v}</option>`).join('')}</select>
   </section>`).join('')}`;
 }
 function renderUdJournal(){
@@ -1930,9 +1934,9 @@ function renderUdJournal(){
 }
 function renderUdShop(){
   return`<section class="card"><b>Preço-alvo Udemy:</b> <span class="muted sm">R$ 20–30 excelente · R$ 30–50 aceitável · R$ 50–70 só se excepcional · acima de R$ 80 evitar.</span><p class="muted sm" style="margin-top:8px">Os preços variam. Revalide os cursos próximos à data de estudo, especialmente Kubernetes e Wazuh.</p></section>
-  ${UD_SHOP.map((x,i)=>{const p=S.udemy.purchases[i]||{};return`<section class="card"><div class="shead"><b>${esc(x[0])}</b><span class="muted sm">alvo R$ ${x[1]}</span></div><div class="muted sm" style="margin-bottom:8px">${esc(x[2])}</div>
-    <div class="grid2" style="grid-template-columns:1fr 1fr"><div><label class="lb">Preço encontrado (R$)</label><input type="text" inputmode="decimal" data-ud="shop-price" data-i="${i}" value="${esc(p.price||'')}"></div><div><label class="lb">Data</label><input type="date" data-ud="shop-date" data-i="${i}" value="${esc(p.date||'')}"></div></div>
-    <label class="lb" style="margin-top:10px">Comprar?</label><select class="sel" data-ud="shop-decision" data-i="${i}">${['Não','Talvez','Sim'].map(v=>`<option ${v===(p.decision||'Não')?'selected':''}>${v}</option>`).join('')}</select>
+  ${UD_SHOP.map((x)=>{const p=S.udemy.purchases[x[0]]||{};return`<section class="card"><div class="shead"><b>${esc(x[0])}</b><span class="muted sm">alvo R$ ${x[1]}</span></div><div class="muted sm" style="margin-bottom:8px">${esc(x[2])}</div>
+    <div class="grid2" style="grid-template-columns:1fr 1fr"><div><label class="lb">Preço encontrado (R$)</label><input type="text" inputmode="decimal" data-ud="shop-price" data-name="${esc(x[0])}" value="${esc(p.price||'')}"></div><div><label class="lb">Data</label><input type="date" data-ud="shop-date" data-name="${esc(x[0])}" value="${esc(p.date||'')}"></div></div>
+    <label class="lb" style="margin-top:10px">Comprar?</label><select class="sel" data-ud="shop-decision" data-name="${esc(x[0])}">${['Não','Talvez','Sim'].map(v=>`<option ${v===(p.decision||'Não')?'selected':''}>${v}</option>`).join('')}</select>
   </section>`}).join('')}`;
 }
 function renderUdemy(){
@@ -1942,22 +1946,22 @@ function renderUdemy(){
   $('#view').innerHTML=sub+body;
 }
 function udField(el){
-  const f=el.dataset.ud,i=+el.dataset.i,v=el.value;
-  if(f==='proj-status')udSetProj(i,'status',v);
-  else if(f==='proj-link')udSetProj(i,'link',v);
-  else if(f==='proj-notes')udSetProj(i,'notes',v);
-  else if(f==='cert')udSetCert(i,v);
-  else if(f==='shop-price')udSetShop(i,'price',v);
-  else if(f==='shop-date')udSetShop(i,'date',v);
-  else if(f==='shop-decision')udSetShop(i,'decision',v);
+  const f=el.dataset.ud,v=el.value;
+  if(f==='proj-status')udSetProj(+el.dataset.i,'status',v);
+  else if(f==='proj-link')udSetProj(+el.dataset.i,'link',v);
+  else if(f==='proj-notes')udSetProj(+el.dataset.i,'notes',v);
+  else if(f==='cert')udSetCert(el.dataset.name,v);
+  else if(f==='shop-price')udSetShop(el.dataset.name,'price',v);
+  else if(f==='shop-date')udSetShop(el.dataset.name,'date',v);
+  else if(f==='shop-decision')udSetShop(el.dataset.name,'decision',v);
 }
 function udAction(a,el){
   switch(a){
     case'ud-tab':S.udTab=el.dataset.ut;S.udOpen=null;render();break;
     case'ud-open':S.udOpen=+el.dataset.i;render();break;
+    case'ud-open-dash':S.udTab='trilha';S.udOpen=+el.dataset.i;render();break;
     case'ud-back':S.udOpen=null;render();break;
-    case'ud-save-pct':{const i2=$('#udPctInp');udSetPct(+el.dataset.i,i2?i2.value:0);break}
-    case'ud-finish':udFinish(+el.dataset.i);break;
+    case'ud-check':udToggleCheck(+el.dataset.i,+el.dataset.k,el.checked);break;
     case'ud-journal-add':
       udAddJournal({date:$('#udDate').value,module:$('#udModule').value,hours:$('#udHours').value,difficulty:$('#udDiff').value,notes:$('#udNotes').value});break;
     case'ud-journal-del':{const id=el.dataset.id;if(S.delId===id){udDelJournal(id)}else{S.delId=id;render();setTimeout(()=>{if(S.delId===id){S.delId=null;if(S.tab==='study')softRender()}},3000)}break}
@@ -2016,9 +2020,9 @@ document.addEventListener('click',ev=>{
       finAction(a,el);break;
     case'ud-tab':
     case'ud-open':
+    case'ud-open-dash':
     case'ud-back':
-    case'ud-save-pct':
-    case'ud-finish':
+    case'ud-check':
     case'ud-journal-add':
     case'ud-journal-del':
       udAction(a,el);break;
