@@ -332,6 +332,9 @@ select.sel:focus{outline:none;border-color:var(--acc)}
     <div class="line" style="padding-bottom:2px;margin-top:6px;border-top:1px solid var(--line)"><b>Cor de destaque</b><span class="muted sm" id="palName"></span></div>
     <div class="sws" id="pals"></div>
     <div class="line" id="instRow" style="border-top:1px solid var(--line);margin-top:8px"><div><b>Instalar no aparelho</b><div class="muted sm" id="instHint"></div></div><button class="btn sm2" id="instBtn" data-a="install" hidden>Instalar</button></div>
+    <div class="line" style="border-top:1px solid var(--line)"><div><b>Estudo conta no progresso do dia</b><div class="muted sm">Concurso ou Pós Udemy também valem o ponto de "estudo", além do registro manual</div></div><button class="sw" id="studyAnySw" data-a="study-any" role="switch" aria-checked="false" aria-label="Contar Concurso/Pós Udemy no progresso"></button></div>
+    <div class="line" style="border-top:1px solid var(--line)"><div><b>Backup</b><div class="muted sm">Exporta tudo (tarefas, estudos, treino, financeiro, Pós Udemy) num arquivo</div></div><div style="display:flex;gap:8px;flex:none"><button class="btn ghost sm2" data-a="backup-export">⬇ Exportar</button><label class="btn ghost sm2" style="cursor:pointer">⬆ Importar<input type="file" id="backupFile" accept="application/json" style="display:none"></label></div></div>
+    <div class="err" id="backupMsg" style="margin-top:6px"></div>
     <div class="line" id="accRow" style="border-top:1px solid var(--line)" hidden><div style="min-width:0"><b>Conta</b><div class="muted sm" id="acct" style="overflow:hidden;text-overflow:ellipsis"></div></div><button class="btn ghost sm2" data-a="logout">Sair</button></div>
   </div>
 </div>
@@ -418,14 +421,14 @@ const BELL='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="
 
 /* ============ estado ============ */
 const DEFAULT_FOCUS={goal:60,study:[],questions:[],errors:[],topicDone:{}};
-const DEFAULT_FIN={entries:[],cats:['Moradia','Alimentação','Transporte','Lazer','Saúde','Assinaturas','Outros']};
+const DEFAULT_FIN={entries:[],cats:['Moradia','Alimentação','Transporte','Lazer','Saúde','Assinaturas','Outros'],budget:0};
 const DEFAULT_UDEMY={checks:{},projStatus:{},projLink:{},projNotes:{},certStatus:{},purchases:{},journal:[]};
 const S={cfg:{tasks:[],start:null},months:{},focus:clone(DEFAULT_FOCUS),fin:clone(DEFAULT_FIN),tab:'checks',focusTab:'dash',viewDay:todayK(),checkDay:todayK(),studyEdit:null,editId:null,delId:null,
   period:'week',anchor:todayK(),selDay:null,histQ:'',histN:15,studyErr:'',newAlarm:null,editAlarm:undefined,notifDismiss:false,onceText:'',focusErrQ:'',focusSubFilt:'',trDay:todayK(),trTab:'log',trPick:{},trEx:null,trPeriod:'week',trAnchor:todayK(),trErr:'',focusExam:(localStorage.getItem('fnx-exam')||'ata'),studyMode:(localStorage.getItem('fnx-studymode')||'udemy'),
   finMonth:todayK().slice(0,7),finEdit:null,finDraft:null,finType:'expense',finErr:'',
   udemy:clone(DEFAULT_UDEMY),udTab:'dash',udOpen:null,udErr:''};
 let LS='fnx-data-v1';const LSS='fnx-settings-v1';
-let SET={amb:'rain',sound:false,vol:.5,pal:'auto'};
+let SET={amb:'rain',sound:false,vol:.5,pal:'auto',studyAny:false};
 try{Object.assign(SET,JSON.parse(localStorage.getItem(LSS)||'{}'))}catch(e){}
 SET.pomo=Object.assign({f:25,s:5,l:15,n:4},SET.pomo||{});
 const saveSet=()=>{try{localStorage.setItem(LSS,JSON.stringify(SET))}catch(e){}};
@@ -466,11 +469,18 @@ function ensureDay(k){const m=S.months[mk(k)]||(S.months[mk(k)]={});if(!m[k])m[k
 function syncDayTasks(k){const d=ensureDay(k);const old=new Map(d.tasks.map(t=>[t.id,t]));d.tasks=S.cfg.tasks.map(t=>({id:t.id,t:t.t,d:old.get(t.id)?old.get(t.id).d:0}))}
 function startKey(){let s=S.cfg.start||todayK();for(const m in S.months)for(const k in S.months[m])if(k<s)s=k;return s}
 const isCounted=k=>k>=startKey()&&k<=todayK();
+function hasAnyStudyToday(k,d){
+  if(studyEntries(d).length>0)return true;
+  if(!SET.studyAny)return false;
+  if(S.focus.study.some(s=>keyOf(new Date(s.date))===k))return true;
+  if(S.udemy.journal.some(j=>j.date===k))return true;
+  return false;
+}
 function dayStats(k){
   const d=getDay(k);let tasks=[];
   if(d)tasks=d.tasks||[];else if(k===todayK())tasks=S.cfg.tasks.map(t=>({id:t.id,t:t.t,d:0}));
   const n=tasks.length,done=tasks.filter(t=>t.d).length;
-  const study=studyEntries(d).length>0;
+  const study=hasAnyStudyToday(k,d);
   const pct=Math.round((done+(study?1:0))/(n+1)*100);
   return{k,tasks,n,done,study,pct,rec:d};
 }
@@ -651,7 +661,7 @@ function taskListFor(k){
 }
 function checkDayStats(k){
   const d=getDay(k),tasks=taskListFor(k)||[],n=tasks.length,done=tasks.filter(t=>t.d).length;
-  const study=studyEntries(d).length>0;
+  const study=hasAnyStudyToday(k,d);
   const pct=Math.round((done+(study?1:0))/(n+1)*100);
   return{k,tasks,n,done,study,pct,rec:d};
 }
@@ -1682,6 +1692,11 @@ const finYM=k=>k.slice(0,7);
 const finMonthLabel=ym=>{const[y,m]=ym.split('-').map(Number);return MESES[m-1]+' de '+y};
 function finAddMonth(ym,n){const[y,m]=ym.split('-').map(Number);const d=new Date(y,m-1+n,1);return d.getFullYear()+'-'+pad(d.getMonth()+1)}
 function finEntries(ym){return S.fin.entries.filter(e=>finYM(e.date)===ym).sort((a,b)=>a.date===b.date?(b.ts||0)-(a.ts||0):(a.date<b.date?1:-1))}
+function finSetBudget(raw){
+  const n=parseFloat(String(raw).replace(/\./g,'').replace(',','.'));
+  S.fin.budget=isFinite(n)&&n>=0?Math.round(n*100)/100:0;
+  queueWrite('fin');render();
+}
 function finTotals(list){const inc=list.filter(e=>e.type==='income').reduce((a,e)=>a+e.amount,0),exp=list.filter(e=>e.type==='expense').reduce((a,e)=>a+e.amount,0);return{inc,exp,bal:inc-exp}}
 function finAllMonths(){return Array.from(new Set(S.fin.entries.map(e=>finYM(e.date)))).sort()}
 function finOverallBalance(uptoYm){let t=0;S.fin.entries.forEach(e=>{if(!uptoYm||finYM(e.date)<=uptoYm)t+=e.type==='income'?e.amount:-e.amount});return t}
@@ -1758,6 +1773,12 @@ function renderFin(){
     <div class="kpi"><div class="k">Saldo do mês</div><div class="v ${tot.bal>=0?'up':'down'}">${tot.bal>=0?'':'−'}${BRL(Math.abs(tot.bal))}</div><div class="s">${tot.inc?Math.round(tot.bal/tot.inc*100)+'% das entradas':'—'}</div></div>
     <div class="kpi"><div class="k">Saldo acumulado</div><div class="v ${overall>=0?'up':'down'}">${overall>=0?'':'−'}${BRL(Math.abs(overall))}</div><div class="s">desde o início do uso</div></div>
   </div>
+  <section class="card">
+    <div class="head" style="margin-bottom:8px"><h2 style="margin:0">🎯 Orçamento do mês</h2>${S.fin.budget>0?`<span class="pill ${tot.exp>S.fin.budget?'':'ok'}">${Math.round(tot.exp/S.fin.budget*100)}% usado</span>`:''}</div>
+    <div class="add"><input type="text" inputmode="decimal" id="finBudgetInp" placeholder="Ex.: 3000,00" value="${S.fin.budget>0?fmtN(S.fin.budget):''}"><button class="btn ghost sm2" data-a="fin-budget-save">Salvar meta</button></div>
+    ${S.fin.budget>0?`<div class="pbarmini" style="height:12px;margin-top:12px"><i style="width:${Math.min(100,Math.round(tot.exp/S.fin.budget*100))}%;background:${tot.exp>S.fin.budget?'var(--bad)':tot.exp>S.fin.budget*.8?'var(--warn)':'var(--ok)'}"></i></div>
+    <div class="muted sm" style="margin-top:6px">${tot.exp>S.fin.budget?`Passou do orçamento em ${BRL(tot.exp-S.fin.budget)}.`:`Faltam ${BRL(S.fin.budget-tot.exp)} para o limite (${BRL(tot.exp)} de ${BRL(S.fin.budget)}).`}</div>`:'<p class="muted sm" style="margin-top:10px">Defina um valor-alvo de gastos para o mês e acompanhe aqui.</p>'}
+  </section>
   <section class="card">${addBody}</section>
   <section class="card"><div class="head" style="margin-bottom:8px"><h2 style="margin:0">Lançamentos</h2><span class="pill">${list.length}</span></div>${finListHTML(list)}</section>
   <section class="card"><h3>Saldo acumulado · últimos 6 meses</h3>${balChart}</section>
@@ -1792,6 +1813,7 @@ function finAction(a,el){
     case'fin-del':if(S.delId===id){finDel(id)}else{S.delId=id;render();setTimeout(()=>{if(S.delId===id){S.delId=null;if(S.tab==='fin')softRender()}},3000)}break;
     case'fin-save':
       finSave({type:S.finType,desc:$('#finDesc').value,amount:$('#finAmt').value,date:$('#finDate').value,cat:$('#finCat').value});break;
+    case'fin-budget-save':{const i=$('#finBudgetInp');finSetBudget(i?i.value:0);break}
   }
 }
 /* ============ PÓS UDEMY (trilha Infra/Cloud/DevOps/Security) ============ */
@@ -2017,6 +2039,7 @@ document.addEventListener('click',ev=>{
     case'fin-type':
     case'fin-del':
     case'fin-save':
+    case'fin-budget-save':
       finAction(a,el);break;
     case'ud-tab':
     case'ud-open':
@@ -2078,6 +2101,8 @@ document.addEventListener('click',ev=>{
     case'amb-close':openSheet(false);break;
     case'amb':setAmb(el.dataset.v);break;
     case'snd':toggleSound();break;
+    case'study-any':SET.studyAny=!SET.studyAny;saveSet();buildSheet();render();break;
+    case'backup-export':backupExport();break;
     case'pal':SET.pal=el.dataset.v;saveSet();applyPal();buildSheet();render();break;
     case'pomo-toggle':pomoToggle();break;
     case'pomo-reset':pomoReset();break;
@@ -2162,6 +2187,7 @@ document.addEventListener('input',ev=>{
 document.addEventListener('toggle',e=>{if(e.target.id==='pset')pOpen=e.target.open},true);
 document.addEventListener('change',ev=>{
   const tg=ev.target,ds=tg.dataset||{};
+  if(tg.id==='backupFile'){backupImportFile(tg.files&&tg.files[0]);tg.value='';return}
   if(ds.pf){planField(tg);return}
   if(ds.ud){udField(tg);return}
   if(ds.tr){trSetVal(S.trDay,ds.ex,+ds.i,ds.tr,tg.value);return}
@@ -2193,6 +2219,7 @@ $('#bg').innerHTML=AMBS.map(a=>`<div class="l" data-a="${a[0]}"></div>`).join(''
 function buildSheet(){
   $('#ambgrid').innerHTML=AMBS.map(a=>`<button class="ab ${SET.amb===a[0]?'on':''}" data-a="amb" data-v="${a[0]}"><span>${a[2]}</span>${a[1]}</button>`).join('');
   $('#sndSw').classList.toggle('on',!!SET.sound);$('#sndSw').setAttribute('aria-checked',!!SET.sound);
+  $('#studyAnySw').classList.toggle('on',!!SET.studyAny);$('#studyAnySw').setAttribute('aria-checked',!!SET.studyAny);
   $('#vol').value=Math.round(SET.vol*100);$('#volTxt').textContent=Math.round(SET.vol*100)+'%';
   $('#sndHint').textContent=SET.amb==='none'?'Escolha um ambiente para ouvir':'Sons gerados no aparelho, sem baixar nada';
   $('#pals').innerHTML=PALS.map(p=>`<button class="swb ${SET.pal===p[0]?'on':''}" data-a="pal" data-v="${p[0]}" title="${p[1]}" aria-label="${p[1]}" style="background:${p[2]?`linear-gradient(135deg,${p[2]},${p[3]})`:'conic-gradient(#6ea8d9,#a798ee,#e0a458,#5fbfb0,#6ea8d9)'}"></button>`).join('');
@@ -2356,6 +2383,36 @@ function syncAudio(){
   }else if(A.cur)stopAudio();
 }
 function toggleSound(){SET.sound=!SET.sound;saveSet();buildSheet();syncAudio()}
+function backupExport(){
+  const payload={fnxBackup:1,exportedAt:new Date().toISOString(),cfg:S.cfg,months:S.months,focus:S.focus,fin:S.fin,udemy:S.udemy};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='fnx-backup-'+todayK()+'.json';document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+  const msg=$('#backupMsg');if(msg){msg.className='err ok';msg.textContent='Backup exportado.';setTimeout(()=>{if(msg)msg.textContent=''},3500)}
+}
+function backupImportFile(file){
+  const msg=$('#backupMsg');
+  if(!file)return;
+  if(!confirm('Importar vai SUBSTITUIR os dados atuais deste aparelho (tarefas, estudos, treino, financeiro, Pós Udemy) pelos do arquivo. Continuar?'))return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    let data;
+    try{data=JSON.parse(reader.result)}catch(e){if(msg){msg.className='err';msg.textContent='Arquivo inválido (não é um JSON legível).'}return}
+    if(!data||typeof data!=='object'||!data.months||!data.cfg){if(msg){msg.className='err';msg.textContent='Esse arquivo não parece ser um backup do FNX.'}return}
+    S.cfg=Object.assign({tasks:[],start:null},data.cfg||{});
+    S.months=data.months||{};
+    S.focus=Object.assign(clone(DEFAULT_FOCUS),data.focus||{});
+    S.fin=Object.assign(clone(DEFAULT_FIN),data.fin||{});
+    S.udemy=Object.assign(clone(DEFAULT_UDEMY),data.udemy||{});
+    saveLocal();
+    queueWrite('cfg');queueWrite('focus');queueWrite('fin');queueWrite('udemy');
+    Object.keys(S.months).forEach(m=>queueWrite('month',m));
+    if(msg){msg.className='err ok';msg.textContent='Backup importado com sucesso.'}
+    render();
+  };
+  reader.readAsText(file);
+}
 document.addEventListener('pointerdown',()=>{if(SET.sound&&SET.amb!=='none'&&(!A.ctx||A.ctx.state!=='running'||A.name!==SET.amb))syncAudio()},{capture:true});
 
 /* ============ pomodoro ============ */
