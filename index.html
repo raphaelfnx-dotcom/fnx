@@ -131,6 +131,8 @@ label.lb{display:block;font-size:12.5px;color:var(--mut);margin:0 0 6px}
 .entry-text{white-space:pre-wrap;word-break:break-word;line-height:1.65}
 .pbarmini{height:8px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden}
 .pbarmini i{display:block;height:100%;border-radius:99px;background:var(--acc)}
+.notetxt{white-space:pre-wrap;word-break:break-word;line-height:1.6;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+.notetxt.open{display:block;overflow:visible}
 .sentry{padding:14px 0;border-bottom:1px solid var(--line)}
 .sentry:first-child{padding-top:0}
 .sentry:last-child{border-bottom:0}
@@ -332,7 +334,6 @@ select.sel:focus{outline:none;border-color:var(--acc)}
     <div class="line" style="padding-bottom:2px;margin-top:6px;border-top:1px solid var(--line)"><b>Cor de destaque</b><span class="muted sm" id="palName"></span></div>
     <div class="sws" id="pals"></div>
     <div class="line" id="instRow" style="border-top:1px solid var(--line);margin-top:8px"><div><b>Instalar no aparelho</b><div class="muted sm" id="instHint"></div></div><button class="btn sm2" id="instBtn" data-a="install" hidden>Instalar</button></div>
-    <div class="line" style="border-top:1px solid var(--line)"><div><b>Estudo conta no progresso do dia</b><div class="muted sm">Concurso ou Pós Udemy também valem o ponto de "estudo", além do registro manual</div></div><button class="sw" id="studyAnySw" data-a="study-any" role="switch" aria-checked="false" aria-label="Contar Concurso/Pós Udemy no progresso"></button></div>
     <div class="line" style="border-top:1px solid var(--line)"><div><b>Backup</b><div class="muted sm">Exporta tudo (tarefas, estudos, treino, financeiro, Pós Udemy) num arquivo</div></div><div style="display:flex;gap:8px;flex:none"><button class="btn ghost sm2" data-a="backup-export">⬇ Exportar</button><label class="btn ghost sm2" style="cursor:pointer">⬆ Importar<input type="file" id="backupFile" accept="application/json" style="display:none"></label></div></div>
     <div class="err" id="backupMsg" style="margin-top:6px"></div>
     <div class="line" id="accRow" style="border-top:1px solid var(--line)" hidden><div style="min-width:0"><b>Conta</b><div class="muted sm" id="acct" style="overflow:hidden;text-overflow:ellipsis"></div></div><button class="btn ghost sm2" data-a="logout">Sair</button></div>
@@ -342,22 +343,15 @@ select.sel:focus{outline:none;border-color:var(--acc)}
 <div class="modal-overlay" id="pomoModal" hidden>
   <div class="modal-box" role="dialog" aria-label="Computar Pomodoro">
     <div class="head">
-      <h2 style="display:flex;align-items:center;gap:8px"><span>🎯</span> Computar no Foco ATA-MF?</h2>
+      <h2 style="display:flex;align-items:center;gap:8px"><span>🎓</span> Registrar na Pós PUCPR?</h2>
       <button class="mini" data-a="pomo-focus-cancel" aria-label="Fechar">✕</button>
     </div>
-    <p class="muted sm" style="margin-bottom:14px">Parabéns pelo ciclo de foco! Deseja registrar esses <b id="pomoModalMin" style="color:var(--tx)">25</b> minutos como tempo de estudo para o concurso?</p>
+    <p class="muted sm" style="margin-bottom:14px">Parabéns pelo ciclo de foco! Deseja registrar esses <b id="pomoModalMin" style="color:var(--tx)">25</b> minutos como tempo de estudo da pós?</p>
     <label class="lb" for="pomoModalSub">Disciplina</label>
     <select id="pomoModalSub"></select>
-    <label class="lb" for="pomoModalType" style="margin-top:10px">Tipo</label>
-    <select id="pomoModalType">
-      <option value="Teoria">Teoria</option>
-      <option value="Questões">Questões</option>
-      <option value="Revisão">Revisão</option>
-      <option value="Simulado">Simulado</option>
-    </select>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px">
       <button class="btn ghost" data-a="pomo-focus-cancel">Agora não</button>
-      <button class="btn" data-a="pomo-focus-confirm">Registrar no Foco</button>
+      <button class="btn" data-a="pomo-focus-confirm">Registrar horas</button>
     </div>
   </div>
 </div>
@@ -423,19 +417,21 @@ const BELL='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="
 const DEFAULT_FOCUS={goal:60,study:[],questions:[],errors:[],topicDone:{}};
 const DEFAULT_FIN={entries:[],cats:['Moradia','Alimentação','Transporte','Lazer','Saúde','Assinaturas','Outros'],budget:0};
 const DEFAULT_UDEMY={checks:{},projStatus:{},projLink:{},projNotes:{},certStatus:{},purchases:{},journal:[]};
+const DEFAULT_POS={status:{linux:'Cursando',python:'Cursando'},labs:[],info:{},temasDone:{},actDone:{},weeklyGoal:10,start:'2026-10-17'};
 const S={cfg:{tasks:[],start:null},months:{},focus:clone(DEFAULT_FOCUS),fin:clone(DEFAULT_FIN),tab:'checks',focusTab:'dash',viewDay:todayK(),checkDay:todayK(),studyEdit:null,editId:null,delId:null,
   period:'week',anchor:todayK(),selDay:null,histQ:'',histN:15,studyErr:'',newAlarm:null,editAlarm:undefined,notifDismiss:false,onceText:'',focusErrQ:'',focusSubFilt:'',trDay:todayK(),trTab:'log',trPick:{},trEx:null,trPeriod:'week',trAnchor:todayK(),trErr:'',focusExam:(localStorage.getItem('fnx-exam')||'ata'),studyMode:(localStorage.getItem('fnx-studymode')||'udemy'),
   finMonth:todayK().slice(0,7),finEdit:null,finDraft:null,finType:'expense',finErr:'',
-  udemy:clone(DEFAULT_UDEMY),udTab:'dash',udOpen:null,udErr:''};
+  udemy:clone(DEFAULT_UDEMY),udTab:'dash',udOpen:null,udErr:'',
+  pos:clone(DEFAULT_POS),posTab:'painel',posOpen:null,posInfoEdit:null,posErr:'',posDraft:null,posLast:'',posNoteEdit:null,posNoteQ:'',posNoteDisc:'',posNoteNewDisc:'',posNoteOpen:{},posHistN:20};
 let LS='fnx-data-v1';const LSS='fnx-settings-v1';
 let SET={amb:'rain',sound:false,vol:.5,pal:'auto',studyAny:false};
 try{Object.assign(SET,JSON.parse(localStorage.getItem(LSS)||'{}'))}catch(e){}
 SET.pomo=Object.assign({f:25,s:5,l:15,n:4},SET.pomo||{});
 const saveSet=()=>{try{localStorage.setItem(LSS,JSON.stringify(SET))}catch(e){}};
-const saveLocal=()=>{try{localStorage.setItem(LS,JSON.stringify({cfg:S.cfg,months:S.months,focus:S.focus,fin:S.fin,udemy:S.udemy}))}catch(e){}};
+const saveLocal=()=>{try{localStorage.setItem(LS,JSON.stringify({cfg:S.cfg,months:S.months,focus:S.focus,fin:S.fin,udemy:S.udemy,pos:S.pos}))}catch(e){}};
 function fbConfigured(){const c=window.FNX_FIREBASE;return !!(c&&c.apiKey&&!/COLE|SEU_|YOUR/i.test(c.apiKey+c.projectId))}
 function loadLocal(){
-  S.cfg={tasks:[],start:null};S.months={};S.focus=clone(DEFAULT_FOCUS);S.fin=clone(DEFAULT_FIN);S.udemy=clone(DEFAULT_UDEMY);
+  S.cfg={tasks:[],start:null};S.months={};S.focus=clone(DEFAULT_FOCUS);S.fin=clone(DEFAULT_FIN);S.udemy=clone(DEFAULT_UDEMY);S.pos=clone(DEFAULT_POS);
   try{
     const o=JSON.parse(localStorage.getItem(LS)||'null');
     if(o){
@@ -444,6 +440,7 @@ function loadLocal(){
       if(o.focus)S.focus=Object.assign(clone(DEFAULT_FOCUS),o.focus);
       if(o.fin)S.fin=Object.assign(clone(DEFAULT_FIN),o.fin);
       if(o.udemy)S.udemy=Object.assign(clone(DEFAULT_UDEMY),o.udemy);
+      if(o.pos)S.pos=Object.assign(clone(DEFAULT_POS),o.pos);
     }
   }catch(e){}
   // Se houver dados legados do projeto ATA-MF no navegador, importa sem perder nada
@@ -471,6 +468,7 @@ function startKey(){let s=S.cfg.start||todayK();for(const m in S.months)for(cons
 const isCounted=k=>k>=startKey()&&k<=todayK();
 function hasAnyStudyToday(k,d){
   if(studyEntries(d).length>0)return true;
+  if(d&&((d.posS&&d.posS.length)||(d.posN&&d.posN.length)))return true;
   if(!SET.studyAny)return false;
   if(S.focus.study.some(s=>keyOf(new Date(s.date))===k))return true;
   if(S.udemy.journal.some(j=>j.date===k))return true;
@@ -499,7 +497,7 @@ function setSync(s){syncState=s;const el=$('#sync');el.dataset.s=s;$('#syncTxt')
 const anyDirty=()=>Object.keys(dirty).some(k=>dirty[k]);
 function queueWrite(kind,key){
   if(!S.cfg.start)S.cfg.start=todayK();
-  const id=kind==='cfg'?'cfg':kind==='focus'?'focus':kind==='fin'?'fin':kind==='udemy'?'udemy':'m:'+key;dirty[id]=true;saveLocal();
+  const id=kind==='cfg'?'cfg':kind==='focus'?'focus':kind==='fin'?'fin':kind==='udemy'?'udemy':kind==='pos'?'pos':'m:'+key;dirty[id]=true;saveLocal();
   if(!base)return;
   clearTimeout(timers[id]);setSync('saving');
   timers[id]=setTimeout(()=>flush(id,kind,key),700);
@@ -508,14 +506,14 @@ function flush(id,kind,key){
   clearTimeout(timers[id]);
   chain[id]=(chain[id]||Promise.resolve()).then(async()=>{
     if(!dirty[id])return;
-    const payload=kind==='cfg'?clone(S.cfg):kind==='focus'?clone(S.focus):kind==='fin'?clone(S.fin):kind==='udemy'?clone(S.udemy):{days:clone(S.months[key]||{})};
+    const payload=kind==='cfg'?clone(S.cfg):kind==='focus'?clone(S.focus):kind==='fin'?clone(S.fin):kind==='udemy'?clone(S.udemy):kind==='pos'?clone(S.pos):{days:clone(S.months[key]||{})};
     dirty[id]=false;
-    try{await base.set(kind==='cfg'?base.cfgRef:kind==='focus'?base.focusRef:kind==='fin'?base.finRef:kind==='udemy'?base.udemyRef:base.month(key),payload)}
+    try{await base.set(kind==='cfg'?base.cfgRef:kind==='focus'?base.focusRef:kind==='fin'?base.finRef:kind==='udemy'?base.udemyRef:kind==='pos'?base.posRef:base.month(key),payload)}
     catch(e){dirty[id]=true;setSync('error');return}
     if(!anyDirty())setSync('ok');
   });
 }
-function flushAll(){for(const id in timers){if(dirty[id]){const m=id.startsWith('m:');const kind=id==='focus'?'focus':id==='fin'?'fin':id==='udemy'?'udemy':m?'month':'cfg';flush(id,kind,m?id.slice(2):null)}}}
+function flushAll(){for(const id in timers){if(dirty[id]){const m=id.startsWith('m:');const kind=id==='focus'?'focus':id==='fin'?'fin':id==='udemy'?'udemy':id==='pos'?'pos':m?'month':'cfg';flush(id,kind,m?id.slice(2):null)}}}
 addEventListener('pagehide',flushAll);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)flushAll()});
 
@@ -545,9 +543,9 @@ function startSession(u){
   try{localStorage.setItem('fnx-last-uid',u.uid)}catch(e){}
   acctEmail=u.email||'';showAuth(false);
   const {fs,db}=fb;
-  const cfgRef=fs.doc(db,'users',u.uid,'store','cfg'),focusRef=fs.doc(db,'users',u.uid,'store','focus'),finRef=fs.doc(db,'users',u.uid,'store','fin'),udemyRef=fs.doc(db,'users',u.uid,'store','udemy'),colRef=fs.collection(db,'users',u.uid,'months');
-  base={cfgRef,focusRef,finRef,udemyRef,colRef,month:k=>fs.doc(colRef,k),set:fs.setDoc,unsubs:[]};
-  let firstC=true,firstF=true,firstFin=true,firstUd=true,firstM=true;
+  const cfgRef=fs.doc(db,'users',u.uid,'store','cfg'),focusRef=fs.doc(db,'users',u.uid,'store','focus'),finRef=fs.doc(db,'users',u.uid,'store','fin'),udemyRef=fs.doc(db,'users',u.uid,'store','udemy'),posRef=fs.doc(db,'users',u.uid,'store','pos'),colRef=fs.collection(db,'users',u.uid,'months');
+  base={cfgRef,focusRef,finRef,udemyRef,posRef,colRef,month:k=>fs.doc(colRef,k),set:fs.setDoc,unsubs:[]};
+  let firstC=true,firstF=true,firstFin=true,firstUd=true,firstPos=true,firstM=true;
   base.unsubs.push(fs.onSnapshot(cfgRef,snap=>{
     if(!snap.exists()){
       if(firstC&&!snap.metadata.fromCache){firstC=false;if(S.cfg.tasks.length||S.cfg.start)queueWrite('cfg')}
@@ -595,6 +593,16 @@ function startSession(u){
     S.udemy=Object.assign(clone(DEFAULT_UDEMY),d);
     saveLocal();softRender();
   },()=>setSync('error')));
+  base.unsubs.push(fs.onSnapshot(posRef,snap=>{
+    if(!snap.exists()){
+      if(firstPos&&!snap.metadata.fromCache){firstPos=false;if(S.pos.labs.length||Object.keys(S.pos.info).length||Object.keys(S.pos.temasDone).length||Object.keys(S.pos.actDone).length)queueWrite('pos')}
+      return;
+    }
+    firstPos=false;
+    if(dirty.pos)return;
+    S.pos=Object.assign(clone(DEFAULT_POS),snap.data()||{});
+    saveLocal();softRender();
+  },()=>setSync('error')));
   base.unsubs.push(fs.onSnapshot(colRef,snap=>{
     let ch=false;
     snap.docChanges().forEach(c=>{
@@ -613,7 +621,7 @@ function startSession(u){
 }
 function endSession(){
   endListeners();
-  S.cfg={tasks:[],start:null};S.months={};S.focus=clone(DEFAULT_FOCUS);S.fin=clone(DEFAULT_FIN);S.udemy=clone(DEFAULT_UDEMY);acctEmail='';
+  S.cfg={tasks:[],start:null};S.months={};S.focus=clone(DEFAULT_FOCUS);S.fin=clone(DEFAULT_FIN);S.udemy=clone(DEFAULT_UDEMY);S.pos=clone(DEFAULT_POS);acctEmail='';
   setSync('conn');showAuth(true);render();
 }
 const AUTH_ERR={'auth/invalid-credential':'E-mail ou senha incorretos.','auth/wrong-password':'E-mail ou senha incorretos.','auth/user-not-found':'E-mail ou senha incorretos.','auth/invalid-email':'E-mail inválido.','auth/email-already-in-use':'Este e-mail já tem conta. Use “Entrar”.','auth/weak-password':'Senha muito fraca (mínimo 6 caracteres).','auth/network-request-failed':'Sem conexão com a internet.','auth/too-many-requests':'Muitas tentativas. Aguarde um pouco e tente de novo.','auth/missing-password':'Informe a senha.'};
@@ -802,10 +810,7 @@ function studySwitcherHTML(){
     <div class="muted sm">${S.studyMode==='contest'?'Edital, Pomodoro, sessões e questões do concurso.':'Trilha Infra → Cloud → DevOps → Security: módulos, projetos, cronograma, carreira, certificações, diário e compras.'}</div>
   </section>`;
 }
-function renderStudyHub(){
-  if(S.studyMode==='contest')renderFocus();else renderUdemy();
-  const v=$('#view');if(v)v.insertAdjacentHTML('afterbegin',studySwitcherHTML());
-}
+function renderStudyHub(){renderPos()}
 function renderStudy(){
   const t=todayK(),k=S.viewDay,d=getDay(k),entries=studyEntries(d);
   const isToday=k===t,inRange=k<=t;
@@ -1024,20 +1029,19 @@ function renderSummary(){
     <section class="card"><h3>Palavras-chave</h3>${kwList.length?`<div class="chips">${kwList.map(([w,c])=>`<span class="chip" style="font-size:${(12+(c/kwMax)*7).toFixed(0)}px">${esc(w)}<b>×${c}</b></span>`).join('')}</div><div class="muted sm" style="margin-top:8px">Combina o que você digitou com termos do próprio tema.</div>`:'<div class="empty">Adicione palavras-chave nos estudos para ver aqui.</div>'}</section>
   </div>
 
-  <h2 class="sumdiv">🎯 Concurso</h2>
+  <h2 class="sumdiv">🎓 Pós PUCPR</h2>
   ${(()=>{
-    const inR=ms=>{const k=keyOf(new Date(ms));return k>=r.s&&k<=r.e};
-    const sess=S.focus.study.filter(x=>inR(x.date)),ques=S.focus.questions.filter(x=>inR(x.date));
-    const mins=sess.reduce((a,x)=>a+(+x.minutes||0),0),qT=ques.reduce((a,x)=>a+(+x.total||0),0),qC=ques.reduce((a,x)=>a+(+x.correct||0),0);
-    const byEx={};if(focusData)Object.keys(EXAMS).forEach(ex=>{if(focusDataCache[ex])byEx[ex]={done:0,total:0}});
-    let topicsDone=0,topicsTotal=0;
-    if(focusData&&focusData.topics)for(const sub in focusData.topics){const arr=focusData.topics[sub]||[];topicsTotal+=arr.length;arr.forEach((_,i)=>{if(S.focus.topicDone[sub+'-'+i])topicsDone++})}
-    if(!sess.length&&!ques.length&&!topicsTotal)return`<section class="card"><div class="empty">Nenhum estudo de concurso neste período. Registre sessões na aba Estudos › 🎯 Concurso.</div></section>`;
+    const ss=posSessionsAll().filter(x=>x.k>=r.s&&x.k<=r.e),mins=posMinBy(ss),tot=ss.reduce((a,x)=>a+(+x.min||0),0);
+    const nts=posNotesAll().filter(n=>n.k>=r.s&&n.k<=r.e).length,pdays=new Set(ss.map(x=>x.k)).size,pdone=POS_DISC.filter(d=>posDoneD(d.id)).length;
+    if(!ss.length&&!nts)return`<section class="card"><div class="empty">Nenhum estudo da pós neste período. Registre na aba Estudos › ⏱ Horas.</div></section>`;
+    const rows=Object.entries(mins).sort((a,b)=>b[1]-a[1]),mx=Math.max(1,...rows.map(x=>x[1]));
     return`<div class="kpis">
-      <div class="kpi"><div class="k">Horas estudadas</div><div class="v">${(mins/60).toFixed(1)}<span class="muted" style="font-size:15px;font-weight:500">h</span></div><div class="s">${sess.length} ${sess.length===1?'sessão':'sessões'}</div></div>
-      <div class="kpi"><div class="k">Questões resolvidas</div><div class="v">${qT}</div><div class="s">${qT?Math.round(qC/qT*100)+'% de acerto':'—'}</div></div>
-      <div class="kpi"><div class="k">Edital (${esc(EXAMS[S.focusExam].label)})</div><div class="v">${topicsTotal?Math.round(topicsDone/topicsTotal*100):0}<span class="muted" style="font-size:15px;font-weight:500">%</span></div><div class="s">${topicsDone}/${topicsTotal} tópicos · total até hoje</div></div>
-    </div>`;
+      <div class="kpi"><div class="k">Horas estudadas</div><div class="v">${fmtDur(tot)}</div><div class="s">${ss.length} ${ss.length===1?'sessão':'sessões'}</div></div>
+      <div class="kpi"><div class="k">Dias estudados</div><div class="v">${pdays}</div><div class="s">no período</div></div>
+      <div class="kpi"><div class="k">Matérias trabalhadas</div><div class="v">${rows.length}</div><div class="s">${nts} ${nts===1?'anotação':'anotações'}</div></div>
+      <div class="kpi"><div class="k">Disciplinas concluídas</div><div class="v">${pdone}<span class="muted" style="font-size:15px;font-weight:500"> / ${POS_DISC.length}</span></div><div class="s">na pós inteira</div></div>
+    </div>
+    ${rows.length?`<section class="card"><h3>Horas por matéria no período</h3>${rows.map(([id,m])=>`<div class="rate" style="grid-template-columns:minmax(100px,40%) 1fr auto"><span class="n" title="${esc(discName(id))}">${esc(discName(id))}</span><span class="b"><i style="width:${Math.round(m/mx*100)}%;background:var(--acc)"></i></span><span class="p" style="min-width:60px">${fmtDur(m)}</span></div>`).join('')}</section>`:''}`;
   })()}
 
   <h2 class="sumdiv">🏋 Treino</h2>
@@ -1068,39 +1072,24 @@ function renderSummary(){
     </div>`;
   })()}
 
-  <h2 class="sumdiv">🎓 Pós Udemy</h2>
-  ${(()=>{
-    const jr=S.udemy.journal.filter(j=>j.date>=r.s&&j.date<=r.e);
-    const hrs=jr.reduce((a,x)=>a+(+x.hours||0),0);
-    const mods=new Set(jr.map(x=>x.module));
-    if(!jr.length)return`<section class="card"><div class="empty">Nenhum estudo da trilha Pós Udemy neste período. Registre na aba Estudos › 🎓 Pós Udemy › Diário.</div></section>`;
-    return`<div class="kpis">
-      <div class="kpi"><div class="k">Horas estudadas</div><div class="v">${hrs.toFixed(1)}<span class="muted" style="font-size:15px;font-weight:500">h</span></div><div class="s">${jr.length} ${jr.length===1?'registro':'registros'}</div></div>
-      <div class="kpi"><div class="k">Módulos trabalhados</div><div class="v">${mods.size}</div><div class="s">${[...mods].slice(0,2).map(esc).join(', ')||'—'}</div></div>
-      <div class="kpi"><div class="k">Progresso geral da trilha</div><div class="v">${udTotal()}<span class="muted" style="font-size:15px;font-weight:500">%</span></div><div class="s">${udDone()}/${UD_MODULES.length} módulos concluídos</div></div>
-    </div>`;
-  })()}
-
   <section class="card"><div class="head" style="margin-bottom:8px"><div><h2>Resumo em texto</h2><div class="muted sm">Copie e cole numa conversa com o Claude para pedir uma leitura mais a fundo</div></div><button class="btn ghost sm2" data-a="copy-summary">📋 Copiar</button></div><div class="muted sm" id="copyMsg"></div></section>`;
 }
 function inRangeDay(k,r){return k>=r.s&&k<=r.e}
 function buildSummaryText(){
   const r=periodRange(),days=rangeDays(r.s,r.e),cn=days.filter(isCounted),sts=cn.map(dayStats),av=avgOf(sts);
-  const sumDone=sts.reduce((a,s)=>a+s.done,0),sumN=sts.reduce((a,s)=>a+s.n,0);
-  const stDays=sts.filter(s=>s.study).length;
-  const inR=ms=>{const k=keyOf(new Date(ms));return k>=r.s&&k<=r.e};
-  const sess=S.focus.study.filter(x=>inR(x.date)),ques=S.focus.questions.filter(x=>inR(x.date));
-  const mins=sess.reduce((a,x)=>a+(+x.minutes||0),0),qT=ques.reduce((a,x)=>a+(+x.total||0),0),qC=ques.reduce((a,x)=>a+(+x.correct||0),0);
+  const sumDone=sts.reduce((a,x)=>a+x.done,0),sumN=sts.reduce((a,x)=>a+x.n,0);
+  const stDays=sts.filter(x=>x.study).length;
+  const ss=posSessionsAll().filter(x=>x.k>=r.s&&x.k<=r.e),pm=posMinBy(ss),ptot=ss.reduce((a,x)=>a+(+x.min||0),0);
+  const top=Object.entries(pm).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([id,m])=>discName(id)+' '+fmtDur(m)).join(', ');
+  const nts=posNotesAll().filter(n=>n.k>=r.s&&n.k<=r.e).length,pdone=POS_DISC.filter(d=>posDoneD(d.id)).length;
   const hist=trData(),dk=Object.keys(hist.days).filter(k=>k>=r.s&&k<=r.e);
   const vol=dk.reduce((a,k)=>a+hist.days[k].vol,0);
   const fl=S.fin.entries.filter(e=>e.date>=r.s&&e.date<=r.e),ft=finTotals(fl);
-  const ujr=S.udemy.journal.filter(j=>j.date>=r.s&&j.date<=r.e),uhrs=ujr.reduce((a,x)=>a+(+x.hours||0),0);
   const lines=[
     `Resumo FNX — ${r.label} (${S.period==='week'?'semana':'mês'})`,
     ``,
     `Rotina: progresso médio ${av==null?'—':av+'%'}, ${sumDone}/${sumN} tarefas concluídas, estudo registrado em ${stDays}/${sts.length} dias.`,
-    `Concurso (${EXAMS[S.focusExam].label}): ${(mins/60).toFixed(1)}h estudadas em ${sess.length} sessões; ${qT} questões (${qT?Math.round(qC/qT*100)+'% de acerto':'sem dados'}).`,
-    `Pós Udemy: ${uhrs.toFixed(1)}h estudadas em ${ujr.length} registros; trilha em ${udTotal()}% (${udDone()}/${UD_MODULES.length} módulos concluídos).`,
+    `Pós PUCPR (Cibersegurança): ${fmtDur(ptot)} estudadas em ${ss.length} sessões${top?' ('+top+')':''}; ${nts} anotações; ${pdone}/${POS_DISC.length} disciplinas concluídas.`,
     `Treino: ${dk.length} dias treinados, volume ${Math.round(vol)}kg.`,
     `Financeiro: entradas ${BRL(ft.inc)}, saídas ${BRL(ft.exp)}, saldo ${BRL(ft.bal)}.`,
     ``,
@@ -1989,6 +1978,369 @@ function udAction(a,el){
     case'ud-journal-del':{const id=el.dataset.id;if(S.delId===id){udDelJournal(id)}else{S.delId=id;render();setTimeout(()=>{if(S.delId===id){S.delId=null;if(S.tab==='study')softRender()}},3000)}break}
   }
 }
+/* ============ PÓS PUCPR — ESPECIALIZAÇÃO EM CIBERSEGURANÇA ============ */
+const POS_DISC=[
+{id:'linux',name:'Administração de Sistemas Linux'},
+{id:'ccna',name:'Cisco CCNA CyberSecurity Operations'},
+{id:'cloud',name:'Cloud Security Essentials'},
+{id:'devsecops',name:'DevSecOps Essentials'},
+{id:'df1',name:'Digital Forensics Essentials I'},
+{id:'df2',name:'Digital Forensics Essentials II'},
+{id:'eh1',name:'Ethical Hacking Essentials I'},
+{id:'eh2',name:'Ethical Hacking Essentials II'},
+{id:'etica',name:'Ética'},
+{id:'ml',name:'Fundamentos e Aplicações de Aprendizagem de Máquina'},
+{id:'iam',name:'Gestão de Identidade e Acesso'},
+{id:'vuln',name:'Gestão de Vulnerabilidades'},
+{id:'nd1',name:'Network Defense Essentials I'},
+{id:'nd2',name:'Network Defense Essentials II'},
+{id:'normas',name:'Normas e Padrões de Segurança'},
+{id:'projeto',name:'Projeto de Aplicação'},
+{id:'python',name:'Python Scripting'},
+{id:'ir',name:'Resposta a Incidentes'},
+{id:'seminarios',name:'Seminários Avançados em TICs'},
+{id:'soc',name:'SOC Essentials'}
+];
+const POS_STATUS=['Não iniciada','Cursando','Concluída'];
+/* Detalhes das disciplinas (planos de ensino). O que não estiver aqui pode ser preenchido pelo app (✏ Editar detalhes). */
+const POS_INFO_DEF={
+linux:{ch:'20h (relógio) · 24 h/a',prof:'Jhonatan Geremias',
+ ementa:'Práticas de administração de sistemas operacionais baseados em Linux, para manter e gerenciar esses ambientes de forma segura, estável e eficiente: usuários e grupos, permissões de acesso, monitoramento de recursos, serviços e processos, automação de rotinas com scripts, políticas de segurança e diagnóstico.',
+ resultado:'Administrar sistemas Linux com foco em desempenho, segurança e estabilidade, utilizando ferramentas e comandos para gerenciar recursos, usuários e serviços.',
+ temas:['Arquitetura do Sistema Linux','Gerenciamento de Usuários e Grupos','Gerenciamento de Processos','Gerenciamento de Discos','Sistemas de Arquivos','Gerenciamento de Rede'],
+ bib:['NEMETH, E.; SNYDER, G.; HEIN, T. R. Manual completo do Linux: guia do administrador. Pearson, 2005 (e-book na Biblioteca Virtual).','RAMOS, Atos. Administração de Servidores Linux. Ciência Moderna, 2013.','BRITO, Samuel Henrique Bucke. Serviços de redes em servidores Linux. Novatec, 2017.'],
+ aulas:[{d:'2026-10-17',t:'08h às 12h',c:'Introdução ao SO Linux; operações básicas; manipulação de arquivos e diretórios; informações sobre o sistema; administração de usuários e grupos; gerenciamento de arquivos; permissões Linux.'},{d:'2026-11-07',t:'08h às 12h',c:'Sistema de arquivos; gerenciamento de disco; gerenciamento de rede; gerenciamento de processos.'}],
+ ativ:[{d:'2026-10-17',t:'Atividade Prática / Relatório 1',c:'Permissões básicas Linux; permissões especiais Linux; lista de controle de acesso estendida.',due:'2026-11-14'},{d:'2026-11-07',t:'Atividade Prática / Relatório 2',c:'Gerenciamento de processos; sistemas de arquivos Linux.',due:'2026-11-14'}]},
+python:{ch:'12h',prof:'Fabio Vinicius Binder',
+ ementa:'Lógica de programação, raciocínio algorítmico e desenvolvimento de scripts em Python: estruturas condicionais, laços de repetição, listas, tuplas, dicionários e funções. Resolução de problemas computacionais com algoritmos e estruturas de dados para automação e scripting em tecnologia e cibersegurança.',
+ resultado:'Propor soluções computacionais em Python, avaliando lógica de programação, estruturas de controle, organização de dados e modularização de código; desenvolver scripts básicos e algoritmos aplicados à automação de tarefas.',
+ temas:['Introdução à programação e ao raciocínio algorítmico','Estruturas condicionais e laços de repetição','Listas, tuplas e dicionários','Desenvolvimento de funções em Python','Manipulação de dados e automação básica com scripts','Resolução de problemas computacionais utilizando Python'],
+ bib:['FORBELLONE; EBERSPÄCHER. Lógica de Programação: Construção de Algoritmos e Estruturas de Dados. Pearson.','MENEZES, Nilo Ney Coutinho. Introdução à Programação com Python. Novatec.','RAMALHO, Luciano. Python Fluente. Novatec.','MATTHES, Eric. Python Crash Course. No Starch Press.'],
+ aulas:[{d:'2026-10-17',t:'13h00 – 17h00',c:'Apresentação, raciocínio algorítmico, introdução ao Python, variáveis, entrada e saída; estruturas condicionais e operadores lógicos; algoritmos com tomada de decisão; estruturas de repetição (while e for).'},{d:'2026-11-07',t:'13h00 – 17h00',c:'Listas, tuplas, dicionários e funções; modularização de código e boas práticas básicas.'}],
+ ativ:[]}
+};
+/* Trilhas de carreira: ★ min = disciplinas mínimas para começar a se candidatar; full = perfil completo. (sugestão baseada nos nomes das disciplinas) */
+const POS_ROLES=[
+{id:'noc',name:'NOC Jr.',emoji:'📡',min:['linux','ccna','nd1'],full:['linux','ccna','nd1','nd2','python'],minLabs:2},
+{id:'infra',name:'Analista de Infra Jr.',emoji:'🖥️',min:['linux','nd1','python'],full:['linux','nd1','nd2','python','cloud','iam'],minLabs:2},
+{id:'soc',name:'SOC Jr. (N1)',emoji:'🛡️',min:['ccna','soc','nd1'],full:['ccna','soc','nd1','nd2','ir','vuln','df1','linux'],minLabs:3},
+{id:'sec',name:'Analista de Segurança Jr.',emoji:'🔐',min:['nd1','vuln','normas'],full:['nd1','nd2','vuln','normas','iam','ir','cloud','etica'],minLabs:3},
+{id:'pentest',name:'Vulnerabilidades / Pentest Jr.',emoji:'🕵️',min:['eh1','vuln','linux'],full:['eh1','eh2','vuln','linux','python','nd1'],minLabs:3},
+{id:'forense',name:'Forense / Resposta a Incidentes Jr.',emoji:'🔎',min:['df1','ir','soc'],full:['df1','df2','ir','soc','linux','ccna'],minLabs:3},
+{id:'cloudsec',name:'Cloud / DevSecOps Jr.',emoji:'☁️',min:['cloud','devsecops','linux'],full:['cloud','devsecops','linux','python','iam','vuln'],minLabs:3}
+];
+const discName=id=>{const d=POS_DISC.find(x=>x.id===id);return d?d.name:'Geral'};
+const posStatus=id=>S.pos.status[id]||'Não iniciada';
+const posDoneD=id=>posStatus(id)==='Concluída';
+const posInfo=id=>S.pos.info[id]||POS_INFO_DEF[id]||{};
+const fmtDur=m=>{m=Math.round(m||0);if(m<60)return m+'min';const h=Math.floor(m/60),r=m%60;return h+'h'+(r?pad(r):'')};
+const brToIso=s=>{const m=String(s||'').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);return m?m[3]+'-'+pad(+m[2])+'-'+pad(+m[1]):''};
+const isoToBr=k=>k?k.slice(8,10)+'/'+k.slice(5,7)+'/'+k.slice(0,4):'';
+const posLines=t=>String(t||'').split('\n').map(x=>x.trim()).filter(Boolean);
+function posAulasTxt(a){return(a||[]).map(x=>[isoToBr(x.d),x.t,x.c].join(' | ')).join('\n')}
+function posAtivTxt(a){return(a||[]).map(x=>[isoToBr(x.d),x.t,x.c,isoToBr(x.due)].join(' | ').replace(/( \| )+$/,'')).join('\n')}
+function posParseAulas(t){return posLines(t).map(l=>{const p=l.split('|').map(x=>x.trim());return{d:brToIso(p[0]),t:p[1]||'',c:p.slice(2).join(' | ')}})}
+function posParseAtiv(t){return posLines(t).map(l=>{const p=l.split('|').map(x=>x.trim());return{d:brToIso(p[0]),t:p[1]||'',c:p[2]||'',due:brToIso(p[3])}})}
+function posDurFromTime(t){
+  const m=String(t||'').match(/(\d{1,2})\s*h\s*(\d{2})?\s*(?:às|as|a|–|-|—)\s*(\d{1,2})\s*h?\s*(\d{2})?/i);if(!m)return 0;
+  const a=+m[1]*60+(+m[2]||0),b=+m[3]*60+(+m[4]||0);return b>a?b-a:0;
+}
+/* dados: sessões e notas ficam dentro dos documentos mensais (d.posS / d.posN) */
+function posSessionsAll(){const o=[];Object.keys(S.months).forEach(m=>Object.keys(S.months[m]).forEach(k=>{const d=S.months[m][k];((d&&d.posS)||[]).forEach(s=>o.push({k,...s}))}));return o.sort((a,b)=>a.k===b.k?(b.ts||0)-(a.ts||0):(a.k<b.k?1:-1))}
+function posNotesAll(){const o=[];Object.keys(S.months).forEach(m=>Object.keys(S.months[m]).forEach(k=>{const d=S.months[m][k];((d&&d.posN)||[]).forEach(n=>o.push({k,...n}))}));return o.sort((a,b)=>(b.ts||0)-(a.ts||0))}
+function posMinBy(list){const m={};list.forEach(s=>{m[s.disc]=(m[s.disc]||0)+(+s.min||0)});return m}
+function posAddSession(k,disc,min,note){
+  const d=ensureDay(k);(d.posS=d.posS||[]).unshift({id:uid8(),disc,min:Math.round(min),note:(note||'').trim().slice(0,200),ts:Date.now()});
+  queueWrite('month',mk(k));
+  if(posStatus(disc)==='Não iniciada'){S.pos.status[disc]='Cursando';queueWrite('pos')}
+  S.posLast=disc;
+}
+function posDelSession(k,id){const d=getDay(k);if(!d||!d.posS)return;d.posS=d.posS.filter(x=>x.id!==id);S.delId=null;queueWrite('month',mk(k));render()}
+function posFindNote(id){for(const m in S.months)for(const k in S.months[m]){const d=S.months[m][k];const n=((d&&d.posN)||[]).find(x=>x.id===id);if(n)return{k,n}}return null}
+function posSaveNote(id,data){
+  const text=data.text.trim();
+  if(!text){S.posErr='Escreva a anotação.';render();return}
+  const k=data.date&&data.date<=todayK()?data.date:todayK(),now=Date.now();
+  if(id==='new'){
+    const d=ensureDay(k);(d.posN=d.posN||[]).unshift({id:uid8(),disc:data.disc||'',title:data.title.trim().slice(0,100),text:text.slice(0,20000),ts:now,upd:now});
+    queueWrite('month',mk(k));
+  }else{
+    const f=posFindNote(id);if(!f){S.posNoteEdit=null;render();return}
+    if(f.k!==k){const od=getDay(f.k);od.posN=od.posN.filter(x=>x.id!==id);queueWrite('month',mk(f.k));const nd=ensureDay(k);(nd.posN=nd.posN||[]).unshift(f.n)}
+    f.n.disc=data.disc||'';f.n.title=data.title.trim().slice(0,100);f.n.text=text.slice(0,20000);f.n.upd=now;
+    queueWrite('month',mk(k));
+  }
+  S.posNoteEdit=null;S.posErr='';render();
+}
+function posDelNote(id){const f=posFindNote(id);if(!f)return;const d=getDay(f.k);d.posN=d.posN.filter(x=>x.id!==id);S.delId=null;queueWrite('month',mk(f.k));render()}
+/* carreira */
+function posRoleState(r){
+  const minDone=r.min.filter(posDoneD).length,fullDone=r.full.filter(posDoneD).length;
+  const labs=S.pos.labs.filter(l=>l.status==='Concluído'&&(!l.disc||r.full.includes(l.disc))).length;
+  const minOk=minDone===r.min.length,labsOk=labs>=r.minLabs;
+  const st=!minOk?'cedo':!labsOk?'labs':fullDone===r.full.length?'comp':'pronto';
+  return{minDone,fullDone,labs,minOk,labsOk,st};
+}
+const POS_ST_LABEL={cedo:'⏳ Ainda cedo',labs:'🟡 Matérias ok — faltam labs',pronto:'🟢 Pode começar a se candidatar',comp:'🏆 Perfil completo'};
+function posEvents(){
+  const ev=[];
+  POS_DISC.forEach(dd=>{const inf=posInfo(dd.id);
+    (inf.aulas||[]).forEach(a=>{if(a.d)ev.push({k:a.d,type:'aula',disc:dd.id,title:'Aula ao vivo'+(a.t?' · '+a.t:''),c:a.c,dur:posDurFromTime(a.t)})});
+    (inf.ativ||[]).forEach(a=>{const dk=a.due||a.d;if(dk){const key=dd.id+':'+nkey(a.t)+':'+(a.d||'');ev.push({k:dk,type:'ativ',disc:dd.id,title:a.t||'Atividade',c:a.c,key,done:!!S.pos.actDone[key],due:!!a.due})}})});
+  return ev.sort((a,b)=>a.k<b.k?-1:1);
+}
+function posRel(k){
+  const n=Math.round((parse(k)-parse(todayK()))/864e5);
+  return n===0?'hoje':n===1?'amanhã':n===-1?'ontem':n>0?'em '+n+' dias':'há '+(-n)+' dias';
+}
+/* ---------- telas ---------- */
+function posEventsHTML(max){
+  const t=todayK();
+  const list=posEvents().filter(e=>e.type==='aula'?e.k>=t:(!e.done)).slice(0,max);
+  if(!list.length)return'<div class="empty">Nenhuma aula ou entrega pendente. Atualize os detalhes das disciplinas para ver as próximas datas aqui.</div>';
+  return list.map(e=>{
+    const late=e.type==='ativ'&&e.k<t;
+    return`<div class="sentry"><div class="shead"><span><b>${e.type==='aula'?'🎥':'📝'} ${esc(e.title)}</b><div class="muted sm">${esc(discName(e.disc))} · ${e.type==='ativ'&&e.due?'entrega até ':''}${fFull(e.k)}</div></span><span class="pill ${late?'':'ok'}" style="${late?'color:var(--bad);border-color:var(--bad)':''}">${posRel(e.k)}</span></div></div>`;
+  }).join('');
+}
+function renderPosPainel(){
+  const ss=posSessionsAll(),mins=posMinBy(ss),total=ss.reduce((a,s)=>a+(+s.min||0),0),t=todayK(),mon=mondayOf(t);
+  const weekMin=ss.filter(s=>s.k>=mon&&s.k<=addDays(mon,6)).reduce((a,s)=>a+(+s.min||0),0);
+  const goal=+S.pos.weeklyGoal||0,wp=goal?Math.min(100,Math.round(weekMin/60/goal*100)):0;
+  const done=POS_DISC.filter(d=>posDoneD(d.id)).length,cur=POS_DISC.filter(d=>posStatus(d.id)==='Cursando').length;
+  const notes=posNotesAll().length,labsDone=S.pos.labs.filter(l=>l.status==='Concluído').length;
+  // timeline do curso (21 meses)
+  const sd=parse(S.pos.start||'2026-10-17'),ed=new Date(sd.getFullYear(),sd.getMonth()+21,sd.getDate()),now=new Date();
+  const mi=Math.min(21,Math.max(1,(now.getFullYear()*12+now.getMonth())-(sd.getFullYear()*12+sd.getMonth())+1));
+  const tp=Math.max(0,Math.min(100,Math.round((now-sd)/(ed-sd)*100)));
+  // próxima meta de carreira
+  const rs=POS_ROLES.map(r=>({r,s:posRoleState(r)})).filter(x=>x.s.st==='cedo'||x.s.st==='labs').sort((a,b)=>(b.s.minDone/b.r.min.length)-(a.s.minDone/a.r.min.length));
+  const nx=rs[0];
+  const miss=nx?nx.r.min.filter(d=>!posDoneD(d)).map(discName):[];
+  // horas por disciplina
+  const rows=POS_DISC.filter(d=>mins[d.id]>0||posStatus(d.id)==='Cursando').sort((a,b)=>(mins[b.id]||0)-(mins[a.id]||0));
+  const mx=Math.max(1,...rows.map(d=>mins[d.id]||0));
+  const rowsH=rows.length?rows.map(d=>{const m=mins[d.id]||0,n=ss.filter(s=>s.disc===d.id).length;return`<div class="rate" style="grid-template-columns:minmax(100px,40%) 1fr auto"><span class="n" title="${esc(d.name)}">${esc(d.name)}</span><span class="b"><i style="width:${Math.round(m/mx*100)}%;background:var(--acc)"></i></span><span class="p" style="min-width:92px">${fmtDur(m)} · ${n} ${n===1?'sessão':'sessões'}</span></div>`}).join(''):'<div class="empty">Registre suas horas na aba ⏱ Horas para ver a distribuição por matéria.</div>';
+  // semanas
+  const wks=[];for(let i=7;i>=0;i--)wks.push(addDays(mon,-7*i));
+  const wv=wks.map(m=>ss.filter(s=>s.k>=m&&s.k<=addDays(m,6)).reduce((a,s)=>a+(+s.min||0),0)/60);
+  return`<div class="kpis">
+    <div class="kpi"><div class="k">Horas estudadas</div><div class="v">${fmtDur(total)}</div><div class="s">${ss.length} ${ss.length===1?'sessão':'sessões'}</div></div>
+    <div class="kpi"><div class="k">Esta semana</div><div class="v">${fmtDur(weekMin)}</div><div class="s">${goal?'meta '+goal+'h · '+wp+'%':'defina uma meta abaixo'}</div></div>
+    <div class="kpi"><div class="k">Disciplinas concluídas</div><div class="v">${done}<span class="muted" style="font-size:15px;font-weight:500"> / ${POS_DISC.length}</span></div><div class="s">${cur} cursando</div></div>
+    <div class="kpi"><div class="k">Anotações · Labs</div><div class="v">${notes}<span class="muted" style="font-size:15px;font-weight:500"> · ${labsDone}</span></div><div class="s">notas · labs concluídos</div></div>
+  </div>
+  <section class="card"><div class="head" style="margin-bottom:6px"><h3 style="margin:0">🗓 Curso</h3><span class="pill">Mês ${mi} de 21</span></div>
+    <div class="pbarmini" style="height:10px"><i style="width:${tp}%"></i></div>
+    <div class="muted sm" style="margin-top:6px">Início ${fFull(S.pos.start||'2026-10-17')} · término previsto ${MC[ed.getMonth()]}/${ed.getFullYear()} · ${tp}% do tempo</div>
+    <div class="add" style="margin-top:10px"><input type="date" id="psStart" value="${S.pos.start||'2026-10-17'}" aria-label="Início da pós"><button class="btn ghost sm2" data-a="ps-start-save">Salvar início</button></div>
+  </section>
+  <section class="card"><h3>📅 Próximas aulas e entregas</h3>${posEventsHTML(6)}</section>
+  <section class="card"><h3>🎯 Meta semanal de horas</h3>
+    ${goal?`<div class="pbarmini" style="height:12px"><i style="width:${wp}%;background:${wp>=100?'var(--ok)':'var(--acc)'}"></i></div><div class="muted sm" style="margin:6px 0 10px">${fmtDur(weekMin)} de ${goal}h nesta semana${wp>=100?' ✓ meta batida!':''}</div>`:''}
+    <div class="add"><input type="text" inputmode="decimal" id="psGoal" placeholder="Horas por semana" value="${goal||''}"><button class="btn ghost sm2" data-a="ps-goal-save">Salvar meta</button></div>
+  </section>
+  <section class="card"><h3>Horas por matéria</h3>${rowsH}</section>
+  <section class="card"><h3>Horas por semana · últimas 8</h3>${barsChart(wv,wks.map(fShort),trW(false),{line:goal||0,fmt:v=>fmtN(v),label:'Horas por semana'})}<div class="muted sm">${goal?'Linha tracejada = meta semanal · verde = meta batida':'Defina uma meta semanal para ver a linha de referência'}</div></section>
+  <section class="card"><h3>🚀 Próxima meta de carreira</h3>${nx?`<div class="entry-topic" style="font-size:17px">${nx.r.emoji} ${esc(nx.r.name)}</div><div class="muted sm" style="margin:4px 0 8px">${nx.s.minDone}/${nx.r.min.length} matérias mínimas${nx.s.minOk?` · labs ${nx.s.labs}/${nx.r.minLabs}`:''}</div><div class="pbarmini"><i style="width:${Math.round(nx.s.minDone/nx.r.min.length*100)}%"></i></div>${miss.length?`<div class="muted sm" style="margin-top:8px">Faltam: ${miss.map(esc).join(', ')}</div>`:`<div class="muted sm" style="margin-top:8px">Faltam laboratórios práticos: conclua ${nx.r.minLabs-nx.s.labs} na aba 🧪 Labs.</div>`}`:'<div class="muted sm">Você já atende o mínimo para todas as trilhas. 🎉</div>'}<button class="btn ghost sm2" style="margin-top:12px" data-a="ps-tab" data-pt="carreira">Ver todas as trilhas</button></section>`;
+}
+function posDetailHTML(id){
+  const dd=POS_DISC.find(x=>x.id===id),inf=posInfo(id),ss=posSessionsAll().filter(s=>s.disc===id),mn=ss.reduce((a,s)=>a+(+s.min||0),0);
+  const notes=posNotesAll().filter(n=>n.disc===id),t=todayK();
+  if(S.posInfoEdit===id){
+    return`<section class="card"><button class="btn ghost sm2" data-a="ps-info-cancel">← Cancelar edição</button>
+    <div class="entry-topic" style="margin-top:12px">✏ Detalhes · ${esc(dd.name)}</div>
+    <p class="muted sm">Preencha com o plano de ensino da disciplina. Dá para ir atualizando conforme o curso avança.</p>
+    <label class="lb">Carga horária</label><input type="text" id="piCh" maxlength="60" value="${esc(inf.ch||'')}">
+    <label class="lb" style="margin-top:10px">Professor</label><input type="text" id="piProf" maxlength="80" value="${esc(inf.prof||'')}">
+    <label class="lb" style="margin-top:10px">Ementa</label><textarea id="piEmenta" style="min-height:110px">${esc(inf.ementa||'')}</textarea>
+    <label class="lb" style="margin-top:10px">Resultado de aprendizagem</label><textarea id="piRes" style="min-height:70px">${esc(inf.resultado||'')}</textarea>
+    <label class="lb" style="margin-top:10px">Temas de estudo (um por linha)</label><textarea id="piTemas" style="min-height:110px">${esc((inf.temas||[]).join('\n'))}</textarea>
+    <label class="lb" style="margin-top:10px">Bibliografia (uma por linha)</label><textarea id="piBib" style="min-height:90px">${esc((inf.bib||[]).join('\n'))}</textarea>
+    <label class="lb" style="margin-top:10px">Aulas ao vivo — uma por linha: <span class="muted">DD/MM/AAAA | horário | conteúdo</span></label><textarea id="piAulas" style="min-height:110px" placeholder="17/10/2026 | 08h às 12h | Introdução ao Linux">${esc(posAulasTxt(inf.aulas))}</textarea>
+    <label class="lb" style="margin-top:10px">Atividades — uma por linha: <span class="muted">DD/MM/AAAA | título | conteúdo | prazo DD/MM/AAAA</span></label><textarea id="piAtiv" style="min-height:110px" placeholder="17/10/2026 | Relatório 1 | Permissões | 14/11/2026">${esc(posAtivTxt(inf.ativ))}</textarea>
+    <div style="display:flex;gap:8px;margin-top:14px"><button class="btn" data-a="ps-info-save" data-id="${id}">Salvar detalhes</button><button class="btn ghost" data-a="ps-info-cancel">Cancelar</button></div></section>`;
+  }
+  const temas=inf.temas||[],td=temas.filter(x=>S.pos.temasDone[id+':'+nkey(x)]).length;
+  const aulas=(inf.aulas||[]).slice().sort((a,b)=>a.d<b.d?-1:1);
+  return`<section class="card"><button class="btn ghost sm2" data-a="ps-back">← Voltar às disciplinas</button>
+    <div class="entry-topic" style="margin-top:12px">${esc(dd.name)}</div>
+    <div class="muted sm">${inf.prof?'Prof. '+esc(inf.prof)+' · ':''}${inf.ch?esc(inf.ch)+' · ':''}${fmtDur(mn)} estudados · ${ss.length} ${ss.length===1?'sessão':'sessões'}</div>
+    <label class="lb" style="margin-top:12px">Status</label>
+    <select class="sel" data-ps="disc-status" data-id="${id}">${POS_STATUS.map(x=>`<option ${x===posStatus(id)?'selected':''}>${x}</option>`).join('')}</select>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn sm2" data-a="ps-go-hours" data-id="${id}">⏱ Registrar horas</button><button class="btn ghost sm2" data-a="ps-go-note" data-id="${id}">📝 Nova anotação</button><button class="btn ghost sm2" data-a="ps-edit-info" data-id="${id}">✏ Editar detalhes</button></div>
+  </section>
+  ${inf.ementa||inf.resultado?`<section class="card"><details><summary style="cursor:pointer;font-weight:650">Ementa e resultado de aprendizagem</summary>${inf.ementa?`<p style="margin:10px 0 6px;line-height:1.6">${esc(inf.ementa)}</p>`:''}${inf.resultado?`<p class="muted sm" style="line-height:1.6"><b>Resultado:</b> ${esc(inf.resultado)}</p>`:''}</details></section>`:''}
+  ${temas.length?`<section class="card"><div class="head" style="margin-bottom:6px"><h3 style="margin:0">Temas de estudo</h3><span class="pill ${td===temas.length?'ok':''}">${td}/${temas.length}</span></div>${temas.map((x,i)=>{const on=!!S.pos.temasDone[id+':'+nkey(x)];return`<label class="topicitem"><input type="checkbox" data-a="ps-tema" data-id="${id}" data-i="${i}" ${on?'checked':''}> <span style="${on?'color:var(--mut);text-decoration:line-through':''}">${esc(x)}</span></label>`}).join('')}</section>`:''}
+  ${aulas.length?`<section class="card"><h3>🎥 Aulas ao vivo</h3>${aulas.map((a,i)=>{const past=a.d&&a.d<=t,dur=posDurFromTime(a.t);return`<div class="sentry"><div class="shead"><span><b>${a.d?fFull(a.d):'sem data'}</b>${a.t?' · '+esc(a.t):''}<div class="muted sm">${esc(a.c)}</div></span>${a.d?`<span class="pill ${a.d>=t?'ok':''}">${posRel(a.d)}</span>`:''}</div>${past&&dur?`<button class="btn ghost sm2" style="margin-top:6px" data-a="ps-reg-aula" data-id="${id}" data-d="${a.d}" data-m="${dur}">⏱ Registrar ${fmtDur(dur)} desta aula</button>`:''}</div>`}).join('')}</section>`:''}
+  ${(inf.ativ||[]).length?`<section class="card"><h3>📝 Atividades</h3>${inf.ativ.map(a=>{const key=id+':'+nkey(a.t)+':'+(a.d||''),on=!!S.pos.actDone[key],dk=a.due||a.d,late=!on&&dk&&dk<t;return`<label class="topicitem" style="align-items:flex-start"><input type="checkbox" data-a="ps-act" data-key="${esc(key)}" ${on?'checked':''}> <span style="${on?'color:var(--mut);text-decoration:line-through':''}"><b>${esc(a.t)}</b>${dk?` · ${a.due?'entrega ':''}${fFull(dk)}`:''}${late?' <span style="color:var(--bad)">(atrasada)</span>':''}<div class="muted sm">${esc(a.c)}</div></span></label>`}).join('')}</section>`:''}
+  ${(inf.bib||[]).length?`<section class="card"><details><summary style="cursor:pointer;font-weight:650">📖 Bibliografia</summary>${inf.bib.map(b=>`<div class="muted sm" style="margin:8px 0">• ${esc(b)}</div>`).join('')}</details></section>`:''}
+  <section class="card"><h3>Anotações desta disciplina (${notes.length})</h3>${notes.length?notes.slice(0,5).map(n=>`<div class="sentry"><b>${esc(n.title||'Sem título')}</b> <span class="muted sm">· ${fFull(n.k)}</span><div class="muted sm" style="white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${esc(n.text)}</div></div>`).join('')+(notes.length>5?`<button class="btn ghost sm2" data-a="ps-go-notes-disc" data-id="${id}" style="margin-top:8px">Ver todas</button>`:''):'<div class="muted sm">Nenhuma anotação ainda.</div>'}</section>
+  <section class="card"><h3>Últimas sessões</h3>${ss.length?ss.slice(0,6).map(s=>`<div class="rate" style="grid-template-columns:70px 1fr auto"><span class="muted sm">${fShort(s.k)}</span><span class="n">${esc(s.note||'—')}</span><b>${fmtDur(s.min)}</b></div>`).join(''):'<div class="muted sm">Nenhuma sessão registrada.</div>'}</section>`;
+}
+function renderPosDisc(){
+  if(S.posOpen)return posDetailHTML(S.posOpen);
+  const mins=posMinBy(posSessionsAll()),rank={Cursando:0,'Não iniciada':1,'Concluída':2};
+  const list=POS_DISC.slice().sort((a,b)=>rank[posStatus(a.id)]-rank[posStatus(b.id)]||a.name.localeCompare(b.name));
+  const done=POS_DISC.filter(d=>posDoneD(d.id)).length;
+  return`<div class="head" style="margin-bottom:2px"><h2 style="margin:0">📚 Grade curricular</h2><span class="pill ${done===POS_DISC.length?'ok':''}">${done}/${POS_DISC.length} concluídas</span></div>
+  ${list.map(d=>{const inf=posInfo(d.id),st=posStatus(d.id);return`<section class="card">
+    <div class="shead"><span><div class="entry-topic" style="font-size:16px;margin:0 0 2px">${esc(d.name)}</div><div class="muted sm">${fmtDur(mins[d.id]||0)} estudados${inf.prof?' · Prof. '+esc(inf.prof):''}${inf.ch?' · '+esc(inf.ch):''}</div></span><span class="pill ${st==='Concluída'?'ok':''}">${st}</span></div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:10px"><select class="sel" style="flex:1" data-ps="disc-status" data-id="${d.id}" aria-label="Status">${POS_STATUS.map(x=>`<option ${x===st?'selected':''}>${x}</option>`).join('')}</select><button class="btn ghost sm2" data-a="ps-open" data-id="${d.id}">Abrir</button></div>
+  </section>`}).join('')}`;
+}
+function renderPosHoras(){
+  const dr=S.posDraft||{},t=todayK();
+  const rank={Cursando:0,'Não iniciada':1,'Concluída':2};
+  const list=POS_DISC.slice().sort((a,b)=>rank[posStatus(a.id)]-rank[posStatus(b.id)]||a.name.localeCompare(b.name));
+  const sel=dr.disc||S.posLast||(list[0]&&list[0].id);
+  const ss=posSessionsAll();
+  return`<section class="card" id="pomo"></section>
+  <section class="card"><h3>⏱ Registrar horas de estudo</h3>
+    <label class="lb">Data</label><input type="date" id="psDate" max="${t}" value="${dr.date||t}">
+    <label class="lb" style="margin-top:10px">Disciplina</label><select class="sel" id="psDisc">${list.map(d=>`<option value="${d.id}" ${d.id===sel?'selected':''}>${esc(d.name)}</option>`).join('')}</select>
+    <div class="grid2" style="grid-template-columns:1fr 1fr;margin-top:10px"><div><label class="lb">Horas</label><input type="number" id="psH" min="0" max="16" inputmode="numeric" placeholder="0" value="${dr.h!=null?dr.h:''}"></div><div><label class="lb">Minutos</label><input type="number" id="psM" min="0" max="59" inputmode="numeric" placeholder="0" value="${dr.m!=null?dr.m:''}"></div></div>
+    <label class="lb" style="margin-top:10px">O que estudou (opcional)</label><input type="text" id="psNote" maxlength="200" placeholder="Ex.: Permissões especiais, SUID/SGID" value="${esc(dr.note||'')}">
+    <div class="err">${esc(S.posErr||'')}</div>
+    <button class="btn" data-a="ps-sess-add">Registrar horas</button>
+  </section>
+  <section class="card"><div class="head" style="margin-bottom:8px"><h2 style="margin:0">Histórico</h2><span class="pill">${ss.length}</span></div>
+  ${ss.length?ss.slice(0,S.posHistN).map(s=>{const arm=S.delId===s.id;return`<div class="sentry"><div class="shead"><span><b>${esc(discName(s.disc))}</b><div class="muted sm">${fMed(s.k)} · ${fmtDur(s.min)}${s.note?' · '+esc(s.note):''}</div></span>${arm?`<button class="mini danger arm" data-a="ps-sess-del" data-k="${s.k}" data-id="${s.id}">Confirmar</button>`:`<button class="mini danger" data-a="ps-sess-del" data-k="${s.k}" data-id="${s.id}" aria-label="Excluir">${TRASH}</button>`}</div></div>`}).join('')+(ss.length>S.posHistN?'<button class="btn ghost sm2" data-a="ps-hist-more" style="margin-top:8px">Ver mais</button>':''):'<div class="empty">Nenhuma sessão registrada ainda.</div>'}
+  </section>`;
+}
+function posNoteForm(n,id){
+  const list=POS_DISC;
+  return`<div class="sentry"><label class="lb">Data</label><input type="date" id="pnDate" max="${todayK()}" value="${n?n.k:todayK()}">
+  <label class="lb" style="margin-top:10px">Disciplina</label><select class="sel" id="pnDisc"><option value="">Geral (sem disciplina)</option>${list.map(d=>`<option value="${d.id}" ${(n?n.disc:S.posNoteNewDisc||'')===d.id?'selected':''}>${esc(d.name)}</option>`).join('')}</select>
+  <label class="lb" style="margin-top:10px">Título (opcional)</label><input type="text" id="pnTitle" maxlength="100" value="${esc(n?n.title:'')}" placeholder="Ex.: Resumo — permissões especiais">
+  <label class="lb" style="margin-top:10px">Anotação</label><textarea id="pnText" style="min-height:200px" placeholder="Escreva com suas palavras o que aprendeu, comandos, dúvidas para revisar…">${esc(n?n.text:'')}</textarea>
+  <div class="err">${esc(S.posErr||'')}</div>
+  <div style="display:flex;gap:8px;margin-top:10px"><button class="btn" data-a="ps-note-save" data-id="${id}">Salvar anotação</button><button class="btn ghost" data-a="ps-note-cancel">Cancelar</button></div></div>`;
+}
+function posNotesListHTML(){
+  const q=nkey(S.posNoteQ||''),f=S.posNoteDisc||'';
+  let list=posNotesAll();const total=list.length;
+  if(f)list=list.filter(n=>f==='_geral'?!n.disc:n.disc===f);
+  if(q)list=list.filter(n=>nkey((n.title||'')+' '+n.text+' '+discName(n.disc)).includes(q));
+  if(!list.length)return`<div class="empty">${total?'Nada encontrado com esse filtro.':'Suas anotações aparecerão aqui.'}</div>`;
+  return`<div class="muted sm" style="margin-bottom:6px">${list.length} ${list.length===1?'anotação':'anotações'}</div>`+list.map(n=>{
+    if(S.posNoteEdit===n.id)return posNoteForm(n,n.id);
+    const open=!!S.posNoteOpen[n.id],long=n.text.length>260||n.text.split('\n').length>5,arm=S.delId===n.id;
+    return`<div class="sentry"><div class="shead"><span><b>${esc(n.title||'Sem título')}</b><div class="muted sm">${fFull(n.k)} · ${esc(discName(n.disc))}${n.upd&&n.ts&&n.upd-n.ts>60000?' · editada':''}</div></span><span style="display:flex;gap:6px;flex:none">${arm?`<button class="mini danger arm" data-a="ps-note-del" data-id="${n.id}">Confirmar</button>`:`<button class="mini" data-a="ps-note-edit" data-id="${n.id}" aria-label="Editar">${PEN}</button><button class="mini danger" data-a="ps-note-del" data-id="${n.id}" aria-label="Excluir">${TRASH}</button>`}</span></div>
+    <div class="notetxt ${open?'open':''}">${esc(n.text)}</div>${long?`<button class="btn ghost sm2" style="margin-top:8px" data-a="ps-note-toggle" data-id="${n.id}">${open?'Mostrar menos':'Ler tudo'}</button>`:''}</div>`;
+  }).join('');
+}
+function renderPosNotesList(){const el=$('#posNotesList');if(el)el.innerHTML=posNotesListHTML()}
+function renderPosNotas(){
+  return`<section class="card">${S.posNoteEdit==='new'?posNoteForm(null,'new'):'<button class="btn" data-a="ps-note-new">+ Nova anotação</button>'}</section>
+  <section class="card"><div class="head" style="margin-bottom:8px"><h2 style="margin:0">Minhas anotações</h2></div>
+    <input type="search" id="posNoteQ" placeholder="Buscar no título, texto ou disciplina…" value="${esc(S.posNoteQ||'')}" aria-label="Buscar">
+    <select class="sel" id="posNoteDisc" style="margin-top:8px" aria-label="Filtrar por disciplina"><option value="">Todas as disciplinas</option><option value="_geral" ${S.posNoteDisc==='_geral'?'selected':''}>Geral (sem disciplina)</option>${POS_DISC.map(d=>`<option value="${d.id}" ${S.posNoteDisc===d.id?'selected':''}>${esc(d.name)}</option>`).join('')}</select>
+    <div id="posNotesList" style="margin-top:10px">${posNotesListHTML()}</div>
+  </section>`;
+}
+function renderPosLabs(){
+  const labs=S.pos.labs,done=labs.filter(l=>l.status==='Concluído').length;
+  return`<section class="card"><h3>🧪 Novo laboratório / prática</h3>
+    <p class="muted sm" style="margin-top:0">Registre laboratórios, CTFs e projetos práticos. Os concluídos contam para liberar as trilhas de carreira.</p>
+    <label class="lb">Título</label><input type="text" id="plTitle" maxlength="100" placeholder="Ex.: Servidor Linux com SSH e firewall">
+    <label class="lb" style="margin-top:10px">Disciplina relacionada (opcional)</label><select class="sel" id="plDisc"><option value="">Geral</option>${POS_DISC.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')}</select>
+    <div class="err">${esc(S.posErr||'')}</div><button class="btn" data-a="ps-lab-add">Adicionar</button></section>
+  <section class="card"><div class="head" style="margin-bottom:6px"><h2 style="margin:0">Meus laboratórios</h2><span class="pill ${done?'ok':''}">${done}/${labs.length} concluídos</span></div>
+  ${labs.length?labs.map(l=>{const arm=S.delId===l.id;return`<div class="sentry"><div class="shead"><span><b>${esc(l.title)}</b><div class="muted sm">${esc(discName(l.disc))}</div></span>${arm?`<button class="mini danger arm" data-a="ps-lab-del" data-id="${l.id}">Confirmar</button>`:`<button class="mini danger" data-a="ps-lab-del" data-id="${l.id}" aria-label="Excluir">${TRASH}</button>`}</div>
+    <select class="sel" data-ps="lab-status" data-id="${l.id}">${['A fazer','Em andamento','Concluído'].map(x=>`<option ${x===l.status?'selected':''}>${x}</option>`).join('')}</select>
+    <input type="text" data-ps="lab-link" data-id="${l.id}" placeholder="Link (GitHub, relatório, evidência)" value="${esc(l.link||'')}" style="margin-top:8px">
+    <textarea data-ps="lab-notes" data-id="${l.id}" placeholder="Observações" style="min-height:60px;margin-top:8px">${esc(l.notes||'')}</textarea></div>`}).join(''):'<div class="empty">Nenhum laboratório ainda.</div>'}
+  </section>`;
+}
+function renderPosCarreira(){
+  const cards=POS_ROLES.map(r=>{const s=posRoleState(r),pct=Math.round(s.fullDone/r.full.length*100),miss=r.min.filter(d=>!posDoneD(d));
+    return`<section class="card"><div class="shead"><span><div class="entry-topic" style="font-size:17px;margin:0">${r.emoji} ${esc(r.name)}</div></span><span class="pill ${s.st==='pronto'||s.st==='comp'?'ok':''}">${POS_ST_LABEL[s.st]}</span></div>
+    <div class="pbarmini" style="height:10px;margin-top:10px"><i style="width:${pct}%;background:${s.st==='pronto'||s.st==='comp'?'var(--ok)':s.st==='labs'?'var(--warn)':'var(--acc)'}"></i></div>
+    <div class="muted sm" style="margin:6px 0">${s.fullDone}/${r.full.length} matérias do perfil · mínimo ★ ${s.minDone}/${r.min.length} · labs ${s.labs}/${r.minLabs}</div>
+    <div class="chips">${r.full.map(d=>`<span class="chip" style="${posDoneD(d)?'border-color:var(--ok);color:var(--ok)':''}">${posDoneD(d)?'✓':'○'} ${r.min.includes(d)?'★ ':''}${esc(discName(d))}</span>`).join('')}</div>
+    ${s.st==='cedo'?`<div class="muted sm" style="margin-top:8px">Para começar a se candidatar, faltam: ${miss.map(d=>esc(discName(d))).join(', ')}.</div>`:s.st==='labs'?`<div class="muted sm" style="margin-top:8px">Matérias mínimas concluídas. Faça mais ${r.minLabs-s.labs} lab(s) prático(s) na aba 🧪 Labs para fechar o mínimo.</div>`:s.st==='pronto'?'<div class="muted sm" style="margin-top:8px">Mínimo atingido: já dá para olhar vagas e se candidatar. Concluir o restante do perfil te deixa mais competitivo.</div>':'<div class="muted sm" style="margin-top:8px">Perfil completo para essa trilha. 🎉</div>'}</section>`}).join('');
+  return`<section class="card"><h2 style="margin-top:0">🎯 Trilhas de carreira</h2><p class="muted sm" style="margin:0">As barras sobem conforme você marca disciplinas como <b>Concluída</b>. ★ = matéria mínima para começar a se candidatar, junto com laboratórios práticos concluídos. São sugestões minhas a partir dos nomes das disciplinas — as exigências reais variam de vaga para vaga.</p></section>${cards}`;
+}
+function renderPos(){
+  const tabs=[['painel','📊 Painel'],['disc','📚 Disciplinas'],['horas','⏱ Horas'],['notas','📝 Notas'],['labs','🧪 Labs'],['carreira','🎯 Carreira']];
+  const sub=`<div class="fsubtabs">${tabs.map(x=>`<button class="fsubtab ${S.posTab===x[0]?'on':''}" data-a="ps-tab" data-pt="${x[0]}">${x[1]}</button>`).join('')}</div>`;
+  const body=S.posTab==='painel'?renderPosPainel():S.posTab==='disc'?renderPosDisc():S.posTab==='horas'?renderPosHoras():S.posTab==='notas'?renderPosNotas():S.posTab==='labs'?renderPosLabs():renderPosCarreira();
+  $('#view').innerHTML=sub+body;
+  if(S.posTab==='horas')renderPomo();
+}
+function posField(el){
+  const f=el.dataset.ps,id=el.dataset.id,v=el.value;
+  if(f==='disc-status'){S.pos.status[id]=v;queueWrite('pos');render();return}
+  const l=S.pos.labs.find(x=>x.id===id);if(!l)return;
+  if(f==='lab-status'){l.status=v;queueWrite('pos');render()}
+  else if(f==='lab-link'){l.link=v.trim().slice(0,300);queueWrite('pos')}
+  else if(f==='lab-notes'){l.notes=v.slice(0,1000);queueWrite('pos')}
+}
+function posAction(a,el){
+  const id=el.dataset.id;
+  switch(a){
+    case'ps-tab':S.posTab=el.dataset.pt;S.posOpen=null;S.posInfoEdit=null;S.posErr='';S.delId=null;render();break;
+    case'ps-open':S.posOpen=id;S.posInfoEdit=null;render();scrollTo({top:0});break;
+    case'ps-back':S.posOpen=null;S.posInfoEdit=null;render();break;
+    case'ps-edit-info':S.posInfoEdit=id;render();scrollTo({top:0});break;
+    case'ps-info-cancel':S.posInfoEdit=null;render();break;
+    case'ps-info-save':{
+      const g=i=>{const e2=$('#'+i);return e2?e2.value:''};
+      S.pos.info[id]={ch:g('piCh').trim().slice(0,60),prof:g('piProf').trim().slice(0,80),ementa:g('piEmenta').trim().slice(0,3000),resultado:g('piRes').trim().slice(0,1500),temas:posLines(g('piTemas')).slice(0,40).map(x=>x.slice(0,150)),bib:posLines(g('piBib')).slice(0,30).map(x=>x.slice(0,300)),aulas:posParseAulas(g('piAulas')).slice(0,40),ativ:posParseAtiv(g('piAtiv')).slice(0,40)};
+      S.posInfoEdit=null;queueWrite('pos');render();break}
+    case'ps-tema':{const inf=posInfo(id),tx=(inf.temas||[])[+el.dataset.i];if(tx!=null){S.pos.temasDone[id+':'+nkey(tx)]=el.checked;queueWrite('pos');render()}break}
+    case'ps-act':S.pos.actDone[el.dataset.key]=el.checked;queueWrite('pos');render();break;
+    case'ps-go-hours':S.posTab='horas';S.posDraft={disc:id};S.posOpen=null;render();scrollTo({top:0});break;
+    case'ps-reg-aula':S.posTab='horas';S.posDraft={disc:id,date:el.dataset.d,h:Math.floor(+el.dataset.m/60),m:+el.dataset.m%60,note:'Aula ao vivo'};S.posOpen=null;render();scrollTo({top:0});break;
+    case'ps-go-note':S.posTab='notas';S.posNoteEdit='new';S.posNoteNewDisc=id;S.posOpen=null;render();scrollTo({top:0});break;
+    case'ps-go-notes-disc':S.posTab='notas';S.posNoteDisc=id;S.posOpen=null;render();scrollTo({top:0});break;
+    case'ps-sess-add':{
+      const g=i=>{const e2=$('#'+i);return e2?e2.value:''};
+      const k=g('psDate')||todayK(),disc=g('psDisc'),h=parseInt(g('psH'),10)||0,m=parseInt(g('psM'),10)||0,tot=h*60+m;
+      S.posDraft={disc,date:k,h:g('psH'),m:g('psM'),note:g('psNote')};
+      if(k>todayK()){S.posErr='A data não pode ser futura.';render();break}
+      if(tot<=0||tot>16*60){S.posErr='Informe o tempo estudado (até 16h).';render();break}
+      posAddSession(k,disc,tot,g('psNote'));S.posDraft=null;S.posErr='';render();break}
+    case'ps-sess-del':if(S.delId===id){posDelSession(el.dataset.k,id)}else{S.delId=id;render();setTimeout(()=>{if(S.delId===id){S.delId=null;if(S.tab==='study')softRender()}},3000)}break;
+    case'ps-hist-more':S.posHistN+=20;render();break;
+    case'ps-note-new':S.posNoteEdit='new';S.posNoteNewDisc=S.posNoteDisc&&S.posNoteDisc!=='_geral'?S.posNoteDisc:'';S.posErr='';render();{const i=$('#pnText');if(i)i.focus()}break;
+    case'ps-note-edit':S.posNoteEdit=id;S.posErr='';render();break;
+    case'ps-note-cancel':S.posNoteEdit=null;S.posErr='';render();break;
+    case'ps-note-save':{const g=i=>{const e2=$('#'+i);return e2?e2.value:''};posSaveNote(id,{date:g('pnDate'),disc:g('pnDisc'),title:g('pnTitle'),text:g('pnText')});break}
+    case'ps-note-del':if(S.delId===id){posDelNote(id)}else{S.delId=id;render();setTimeout(()=>{if(S.delId===id){S.delId=null;if(S.tab==='study')softRender()}},3000)}break;
+    case'ps-note-toggle':S.posNoteOpen[id]=!S.posNoteOpen[id];renderPosNotesList();break;
+    case'ps-lab-add':{
+      const ti=$('#plTitle'),ds=$('#plDisc'),title=ti?ti.value.trim():'';
+      if(!title){S.posErr='Dê um título ao laboratório.';render();break}
+      S.pos.labs.unshift({id:uid8(),title:title.slice(0,100),disc:ds?ds.value:'',status:'A fazer',link:'',notes:''});S.posErr='';queueWrite('pos');render();break}
+    case'ps-lab-del':if(S.delId===id){S.pos.labs=S.pos.labs.filter(x=>x.id!==id);S.delId=null;queueWrite('pos');render()}else{S.delId=id;render();setTimeout(()=>{if(S.delId===id){S.delId=null;if(S.tab==='study')softRender()}},3000)}break;
+    case'ps-goal-save':{const i=$('#psGoal'),n=parseFloat(String(i?i.value:'').replace(',','.'));S.pos.weeklyGoal=isFinite(n)&&n>0?Math.min(80,Math.round(n*2)/2):0;queueWrite('pos');render();break}
+    case'ps-start-save':{const i=$('#psStart');if(i&&i.value){S.pos.start=i.value;queueWrite('pos');render()}break}
+  }
+}
+function posNoteSearchInput(v){S.posNoteQ=v;renderPosNotesList()}
+/* ---- Pomodoro → registra na Pós ---- */
+let pendingPomoMins=0;
+function openPomoFocusModal(mins){
+  pendingPomoMins=mins;
+  const sel=$('#pomoModalSub');
+  if(sel){
+    const rank={Cursando:0,'Não iniciada':1,'Concluída':2},list=POS_DISC.slice().sort((a,b)=>rank[posStatus(a.id)]-rank[posStatus(b.id)]||a.name.localeCompare(b.name));
+    const cur=S.posLast||(list[0]&&list[0].id);
+    sel.innerHTML=list.map(d=>`<option value="${d.id}" ${d.id===cur?'selected':''}>${esc(d.name)}</option>`).join('');
+  }
+  const mEl=$('#pomoModalMin');if(mEl)mEl.textContent=mins;
+  const modal=$('#pomoModal');if(modal)modal.hidden=false;
+}
+function closePomoFocusModal(){const modal=$('#pomoModal');if(modal)modal.hidden=true;pendingPomoMins=0}
+function confirmPomoFocus(){
+  const sel=$('#pomoModalSub'),disc=sel?sel.value:POS_DISC[0].id;
+  const mins=pendingPomoMins||Math.round(pDur('f')/60);
+  posAddSession(todayK(),disc,mins,'Pomodoro ('+mins+' min)');
+  closePomoFocusModal();
+  if(S.tab==='study'&&S.posTab==='horas')render();else renderTop();
+}
 /* ============ render geral ============ */
 function render(){
   renderTop();
@@ -2008,9 +2360,10 @@ function softRender(){
 document.addEventListener('click',ev=>{
   const el=ev.target.closest('[data-a]');if(!el)return;
   const a=el.dataset.a,id=el.dataset.id;
+  if(a.indexOf('ps-')===0){posAction(a,el);return}
   switch(a){
     case'tab':S.tab=el.dataset.t;S.editId=null;S.delId=null;if(S.tab==='study'){S.viewDay=todayK();S.studyEdit=null}else if(S.tab==='checks'){S.checkDay=todayK()}else if(S.tab==='treino'){S.trDay=todayK();S.trErr=''}else if(S.tab==='fin'){S.finEdit=null;S.finErr=''}scrollTo({top:0});render();break;
-    case'go-study':S.tab='study';S.viewDay=todayK();S.udTab='diario';S.studyEdit=null;S.studyMode='udemy';try{localStorage.setItem('fnx-studymode','udemy')}catch(e){};scrollTo({top:0});render();break;
+    case'go-study':S.tab='study';S.posTab='horas';S.posOpen=null;scrollTo({top:0});render();break;
     case'tr-tab':
     case'tr-prev':
     case'tr-next':
@@ -2055,8 +2408,7 @@ document.addEventListener('click',ev=>{
       if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(ok).catch(()=>{if(msg)msg.textContent=txt});
       else if(msg)msg.textContent=txt;
       break}
-    case'go-focus':S.tab='study';S.studyMode='contest';try{localStorage.setItem('fnx-studymode','contest')}catch(e){}scrollTo({top:0});render();break;
-    case'study-mode':S.studyMode=el.dataset.m;try{localStorage.setItem('fnx-studymode',S.studyMode)}catch(e){}if(S.studyMode==='contest'&&!focusData)loadFocusData().then(()=>softRender());render();break;
+    case'go-focus':S.tab='study';S.posTab='horas';S.posOpen=null;scrollTo({top:0});render();break;
     case'toggle':toggleTask(id);break;
     case'edit':S.editId=id;S.delId=null;S.editAlarm=undefined;render();{const i=$('#editInp');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}}break;
     case'save-edit':{const ai=$('#editAlarmTime');editTask(id,$('#editInp').value,ai?ai.value:'');askNotifIfNeeded();break}
@@ -2073,7 +2425,7 @@ document.addEventListener('click',ev=>{
     case'check-today':S.checkDay=todayK();S.delId=null;render();break;
     case'add-once':{const i=$('#onceTask');S.onceText=i.value;addOnceTask(el.dataset.k,i.value);const n=$('#onceTask');if(n)n.focus()}break;
     case'del-once':if(S.delId===id){delOnceTask(el.dataset.k,id)}else{S.delId=id;render();setTimeout(()=>{if(S.delId===id){S.delId=null;if(S.tab==='checks')softRender()}},3000)}break;
-    case'go-study-day':S.tab='study';S.viewDay=el.dataset.k;S.udTab='diario';S.studyEdit=null;S.studyMode='udemy';try{localStorage.setItem('fnx-studymode','udemy')}catch(e){};scrollTo({top:0});render();break;
+    case'go-study-day':S.tab='study';S.posTab='horas';S.posOpen=null;scrollTo({top:0});render();break;
     case'del':if(S.delId===id){delTask(id)}else{S.delId=id;render();setTimeout(()=>{if(S.delId===id){S.delId=null;if(S.tab==='checks')softRender()}},3000)}break;
     case'add-task':{const i=$('#newTask'),ai=$('#newAlarmTime');addTask(i.value,ai?ai.value:'');askNotifIfNeeded();const n=$('#newTask');if(n)n.focus()}break;
     case'study-prev':S.viewDay=addDays(S.viewDay,-1);S.studyEdit=null;S.studyErr='';render();break;
@@ -2088,7 +2440,7 @@ document.addEventListener('click',ev=>{
       if(!tp.trim()||!tx.trim()){S.studyErr='Preencha o tema e o que você aprendeu.';$('#stErr').textContent=S.studyErr;return}
       if(sid==='new')addStudyEntry(S.viewDay,tp,tx,tg);else editStudyEntry(S.viewDay,sid,tp,tx,tg);
       break}
-    case'open-study':S.tab='study';S.viewDay=el.dataset.k;S.udTab='diario';S.studyEdit=null;S.studyMode='udemy';try{localStorage.setItem('fnx-studymode','udemy')}catch(e){};scrollTo({top:0});render();break;
+    case'open-study':S.tab='study';S.posTab='horas';S.posOpen=null;scrollTo({top:0});render();break;
     case'hist-more':S.histN+=20;renderHist();break;
     case'per':S.period=el.dataset.p;S.selDay=null;render();break;
     case'nav':{const d=+el.dataset.d;
@@ -2101,7 +2453,6 @@ document.addEventListener('click',ev=>{
     case'amb-close':openSheet(false);break;
     case'amb':setAmb(el.dataset.v);break;
     case'snd':toggleSound();break;
-    case'study-any':SET.studyAny=!SET.studyAny;saveSet();buildSheet();render();break;
     case'backup-export':backupExport();break;
     case'pal':SET.pal=el.dataset.v;saveSet();applyPal();buildSheet();render();break;
     case'pomo-toggle':pomoToggle();break;
@@ -2181,12 +2532,15 @@ document.addEventListener('input',ev=>{
   const t=ev.target;
   if(t.id==='stText'){$('#stCount').textContent=words(t.value)+' palavras'}
   else if(t.id==='histQ'){S.histQ=t.value;S.histN=15;renderHist()}
+  else if(t.id==='posNoteQ'){posNoteSearchInput(t.value)}
   else if(t.id==='fErrSearch'){S.focusErrQ=t.value;if(S.tab==='study'&&S.studyMode==='contest'&&S.focusTab==='errors')softRender()}
   else if(t.id==='vol'){SET.vol=t.value/100;$('#volTxt').textContent=t.value+'%';saveSet();if(A.master)A.master.gain.setTargetAtTime(SET.vol,A.ctx.currentTime,.05)}
 });
 document.addEventListener('toggle',e=>{if(e.target.id==='pset')pOpen=e.target.open},true);
 document.addEventListener('change',ev=>{
   const tg=ev.target,ds=tg.dataset||{};
+  if(ds.ps){posField(tg);return}
+  if(tg.id==='posNoteDisc'){S.posNoteDisc=tg.value;renderPosNotesList();return}
   if(tg.id==='backupFile'){backupImportFile(tg.files&&tg.files[0]);tg.value='';return}
   if(ds.pf){planField(tg);return}
   if(ds.ud){udField(tg);return}
@@ -2219,7 +2573,6 @@ $('#bg').innerHTML=AMBS.map(a=>`<div class="l" data-a="${a[0]}"></div>`).join(''
 function buildSheet(){
   $('#ambgrid').innerHTML=AMBS.map(a=>`<button class="ab ${SET.amb===a[0]?'on':''}" data-a="amb" data-v="${a[0]}"><span>${a[2]}</span>${a[1]}</button>`).join('');
   $('#sndSw').classList.toggle('on',!!SET.sound);$('#sndSw').setAttribute('aria-checked',!!SET.sound);
-  $('#studyAnySw').classList.toggle('on',!!SET.studyAny);$('#studyAnySw').setAttribute('aria-checked',!!SET.studyAny);
   $('#vol').value=Math.round(SET.vol*100);$('#volTxt').textContent=Math.round(SET.vol*100)+'%';
   $('#sndHint').textContent=SET.amb==='none'?'Escolha um ambiente para ouvir':'Sons gerados no aparelho, sem baixar nada';
   $('#pals').innerHTML=PALS.map(p=>`<button class="swb ${SET.pal===p[0]?'on':''}" data-a="pal" data-v="${p[0]}" title="${p[1]}" aria-label="${p[1]}" style="background:${p[2]?`linear-gradient(135deg,${p[2]},${p[3]})`:'conic-gradient(#6ea8d9,#a798ee,#e0a458,#5fbfb0,#6ea8d9)'}"></button>`).join('');
@@ -2384,7 +2737,7 @@ function syncAudio(){
 }
 function toggleSound(){SET.sound=!SET.sound;saveSet();buildSheet();syncAudio()}
 function backupExport(){
-  const payload={fnxBackup:1,exportedAt:new Date().toISOString(),cfg:S.cfg,months:S.months,focus:S.focus,fin:S.fin,udemy:S.udemy};
+  const payload={fnxBackup:1,exportedAt:new Date().toISOString(),cfg:S.cfg,months:S.months,focus:S.focus,fin:S.fin,udemy:S.udemy,pos:S.pos};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob),a=document.createElement('a');
   a.href=url;a.download='fnx-backup-'+todayK()+'.json';document.body.appendChild(a);a.click();a.remove();
@@ -2405,8 +2758,9 @@ function backupImportFile(file){
     S.focus=Object.assign(clone(DEFAULT_FOCUS),data.focus||{});
     S.fin=Object.assign(clone(DEFAULT_FIN),data.fin||{});
     S.udemy=Object.assign(clone(DEFAULT_UDEMY),data.udemy||{});
+    S.pos=Object.assign(clone(DEFAULT_POS),data.pos||{});
     saveLocal();
-    queueWrite('cfg');queueWrite('focus');queueWrite('fin');queueWrite('udemy');
+    queueWrite('cfg');queueWrite('focus');queueWrite('fin');queueWrite('udemy');queueWrite('pos');
     Object.keys(S.months).forEach(m=>queueWrite('month',m));
     if(msg){msg.className='err ok';msg.textContent='Backup importado com sucesso.'}
     render();
@@ -2442,7 +2796,7 @@ function pomoHTML(){
     <label>Focos até a pausa longa<input type="number" inputmode="numeric" min="2" max="8" data-pset="n" value="${SET.pomo.n}"></label>
   </div></details>`;
 }
-function renderPomo(){const el=$('#pomo');if(el&&S.tab==='study'&&S.studyMode==='contest')el.innerHTML=pomoHTML()}
+function renderPomo(){const el=$('#pomo');if(el&&S.tab==='study'&&S.posTab==='horas')el.innerHTML=pomoHTML()}
 function pomoChip(){
   const b=$('#pchip');if(!b)return;
   const left=pLeft(),active=P.running||left<pDur(P.mode);
@@ -2459,39 +2813,6 @@ function beep(){
   }catch(e){}
   try{if(navigator.vibrate)navigator.vibrate([200,100,200])}catch(e){}
 }
-let pendingPomoMins=0;
-function openPomoFocusModal(mins){
-  pendingPomoMins=mins;
-  loadFocusData().then(fd=>{
-    const sel=$('#pomoModalSub');
-    if(sel&&fd&&fd.subjects){
-      sel.innerHTML=fd.subjects.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
-    }
-    const mEl=$('#pomoModalMin');if(mEl)mEl.textContent=mins;
-    const modal=$('#pomoModal');if(modal)modal.hidden=false;
-  });
-}
-function closePomoFocusModal(){
-  const modal=$('#pomoModal');if(modal)modal.hidden=true;
-  pendingPomoMins=0;
-}
-function confirmPomoFocus(){
-  const sel=$('#pomoModalSub'),typeSel=$('#pomoModalType');
-  const sub=sel?sel.value:'portugues',type=typeSel?typeSel.value:'Teoria';
-  const mins=pendingPomoMins||Math.round(pDur('f')/60);
-  S.focus.study.unshift({
-    id:uid8(),
-    date:Date.now(),
-    subject:sub,
-    minutes:mins,
-    type:type,
-    note:'Pomodoro ('+mins+'m)'
-  });
-  queueWrite('focus');
-  closePomoFocusModal();
-  if(S.tab==='study'&&S.studyMode==='contest')render();
-}
-
 function pomoDone(){
   const was=P.mode;P.running=false;
   if(was==='f'){
@@ -2573,7 +2894,7 @@ setInterval(alarmTick,15000);
 let lastToday=todayK();
 setInterval(()=>{const t=todayK();if(t!==lastToday){if(S.viewDay===lastToday)S.viewDay=t;lastToday=t;softRender()}},30000);
 addEventListener('resize',resizeFx);
-resizeFx();applyAmb();loadFocusData().then(()=>{if(S.tab==='study'&&S.studyMode==='contest')render()});render();requestAnimationFrame(frame);
+resizeFx();applyAmb();render();requestAnimationFrame(frame);
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 initApp();
 })();
