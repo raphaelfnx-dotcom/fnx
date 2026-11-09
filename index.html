@@ -131,6 +131,13 @@ label.lb{display:block;font-size:12.5px;color:var(--mut);margin:0 0 6px}
 .entry-text{white-space:pre-wrap;word-break:break-word;line-height:1.65}
 .pbarmini{height:8px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden}
 .pbarmini i{display:block;height:100%;border-radius:99px;background:var(--acc)}
+details.prweek{padding:0}
+details.prweek>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px}
+details.prweek>summary::-webkit-details-marker{display:none}
+.prwbody{padding:0 14px 12px}
+.prday{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px}
+.prday.today{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
+.prclock{font-size:56px;font-weight:700;text-align:center;font-variant-numeric:tabular-nums;margin:10px 0 2px}
 .notetxt{white-space:pre-wrap;word-break:break-word;line-height:1.6;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
 .notetxt.open{display:block;overflow:visible}
 .sentry{padding:14px 0;border-bottom:1px solid var(--line)}
@@ -417,21 +424,23 @@ const BELL='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="
 const DEFAULT_FOCUS={goal:60,study:[],questions:[],errors:[],topicDone:{}};
 const DEFAULT_FIN={entries:[],cats:['Moradia','Alimentação','Transporte','Lazer','Saúde','Assinaturas','Outros'],budget:0};
 const DEFAULT_UDEMY={checks:{},projStatus:{},projLink:{},projNotes:{},certStatus:{},purchases:{},journal:[]};
+const DEFAULT_PRF={st:{},err:[]};
 const DEFAULT_POS={status:{linux:'Cursando',python:'Cursando'},labs:[],info:{},temasDone:{},actDone:{},weeklyGoal:10,start:'2026-10-17'};
 const S={cfg:{tasks:[],start:null},months:{},focus:clone(DEFAULT_FOCUS),fin:clone(DEFAULT_FIN),tab:'checks',focusTab:'dash',viewDay:todayK(),checkDay:todayK(),studyEdit:null,editId:null,delId:null,
   period:'week',anchor:todayK(),selDay:null,histQ:'',histN:15,studyErr:'',newAlarm:null,editAlarm:undefined,notifDismiss:false,onceText:'',focusErrQ:'',focusSubFilt:'',trDay:todayK(),trTab:'log',trPick:{},trEx:null,trPeriod:'week',trAnchor:todayK(),trErr:'',focusExam:(localStorage.getItem('fnx-exam')||'ata'),studyMode:(localStorage.getItem('fnx-studymode')||'udemy'),
   finMonth:todayK().slice(0,7),finEdit:null,finDraft:null,finType:'expense',finErr:'',
   udemy:clone(DEFAULT_UDEMY),udTab:'dash',udOpen:null,udErr:'',
-  pos:clone(DEFAULT_POS),posTab:'painel',posOpen:null,posInfoEdit:null,posErr:'',posDraft:null,posLast:'',posNoteEdit:null,posNoteQ:'',posNoteDisc:'',posNoteNewDisc:'',posNoteOpen:{},posHistN:20};
+  pos:clone(DEFAULT_POS),posTab:'painel',posOpen:null,posInfoEdit:null,posErr:'',posDraft:null,posLast:'',posNoteEdit:null,posNoteQ:'',posNoteDisc:'',posNoteNewDisc:'',posNoteOpen:{},posHistN:20,
+  prf:clone(DEFAULT_PRF),prfTab:'plano',prfOpenW:{},prfRev:null,prfErrFilter:'',prfMsg:'',studySec:(localStorage.getItem('fnx-studysec')||'prf')};
 let LS='fnx-data-v1';const LSS='fnx-settings-v1';
 let SET={amb:'rain',sound:false,vol:.5,pal:'auto',studyAny:false};
 try{Object.assign(SET,JSON.parse(localStorage.getItem(LSS)||'{}'))}catch(e){}
 SET.pomo=Object.assign({f:25,s:5,l:15,n:4},SET.pomo||{});
 const saveSet=()=>{try{localStorage.setItem(LSS,JSON.stringify(SET))}catch(e){}};
-const saveLocal=()=>{try{localStorage.setItem(LS,JSON.stringify({cfg:S.cfg,months:S.months,focus:S.focus,fin:S.fin,udemy:S.udemy,pos:S.pos}))}catch(e){}};
+const saveLocal=()=>{try{localStorage.setItem(LS,JSON.stringify({cfg:S.cfg,months:S.months,focus:S.focus,fin:S.fin,udemy:S.udemy,pos:S.pos,prf:S.prf}))}catch(e){}};
 function fbConfigured(){const c=window.FNX_FIREBASE;return !!(c&&c.apiKey&&!/COLE|SEU_|YOUR/i.test(c.apiKey+c.projectId))}
 function loadLocal(){
-  S.cfg={tasks:[],start:null};S.months={};S.focus=clone(DEFAULT_FOCUS);S.fin=clone(DEFAULT_FIN);S.udemy=clone(DEFAULT_UDEMY);S.pos=clone(DEFAULT_POS);
+  S.cfg={tasks:[],start:null};S.months={};S.focus=clone(DEFAULT_FOCUS);S.fin=clone(DEFAULT_FIN);S.udemy=clone(DEFAULT_UDEMY);S.pos=clone(DEFAULT_POS);S.prf=clone(DEFAULT_PRF);
   try{
     const o=JSON.parse(localStorage.getItem(LS)||'null');
     if(o){
@@ -441,6 +450,7 @@ function loadLocal(){
       if(o.fin)S.fin=Object.assign(clone(DEFAULT_FIN),o.fin);
       if(o.udemy)S.udemy=Object.assign(clone(DEFAULT_UDEMY),o.udemy);
       if(o.pos)S.pos=Object.assign(clone(DEFAULT_POS),o.pos);
+      if(o.prf)S.prf=Object.assign(clone(DEFAULT_PRF),o.prf);
     }
   }catch(e){}
   // Se houver dados legados do projeto ATA-MF no navegador, importa sem perder nada
@@ -469,6 +479,7 @@ const isCounted=k=>k>=startKey()&&k<=todayK();
 function hasAnyStudyToday(k,d){
   if(studyEntries(d).length>0)return true;
   if(d&&((d.posS&&d.posS.length)||(d.posN&&d.posN.length)))return true;
+  if(prfDayAny(k))return true;
   if(!SET.studyAny)return false;
   if(S.focus.study.some(s=>keyOf(new Date(s.date))===k))return true;
   if(S.udemy.journal.some(j=>j.date===k))return true;
@@ -497,7 +508,7 @@ function setSync(s){syncState=s;const el=$('#sync');el.dataset.s=s;$('#syncTxt')
 const anyDirty=()=>Object.keys(dirty).some(k=>dirty[k]);
 function queueWrite(kind,key){
   if(!S.cfg.start)S.cfg.start=todayK();
-  const id=kind==='cfg'?'cfg':kind==='focus'?'focus':kind==='fin'?'fin':kind==='udemy'?'udemy':kind==='pos'?'pos':'m:'+key;dirty[id]=true;saveLocal();
+  const id=kind==='cfg'?'cfg':kind==='focus'?'focus':kind==='fin'?'fin':kind==='udemy'?'udemy':kind==='pos'?'pos':kind==='prf'?'prf':'m:'+key;dirty[id]=true;saveLocal();
   if(!base)return;
   clearTimeout(timers[id]);setSync('saving');
   timers[id]=setTimeout(()=>flush(id,kind,key),700);
@@ -506,14 +517,14 @@ function flush(id,kind,key){
   clearTimeout(timers[id]);
   chain[id]=(chain[id]||Promise.resolve()).then(async()=>{
     if(!dirty[id])return;
-    const payload=kind==='cfg'?clone(S.cfg):kind==='focus'?clone(S.focus):kind==='fin'?clone(S.fin):kind==='udemy'?clone(S.udemy):kind==='pos'?clone(S.pos):{days:clone(S.months[key]||{})};
+    const payload=kind==='cfg'?clone(S.cfg):kind==='focus'?clone(S.focus):kind==='fin'?clone(S.fin):kind==='udemy'?clone(S.udemy):kind==='pos'?clone(S.pos):kind==='prf'?clone(S.prf):{days:clone(S.months[key]||{})};
     dirty[id]=false;
-    try{await base.set(kind==='cfg'?base.cfgRef:kind==='focus'?base.focusRef:kind==='fin'?base.finRef:kind==='udemy'?base.udemyRef:kind==='pos'?base.posRef:base.month(key),payload)}
+    try{await base.set(kind==='cfg'?base.cfgRef:kind==='focus'?base.focusRef:kind==='fin'?base.finRef:kind==='udemy'?base.udemyRef:kind==='pos'?base.posRef:kind==='prf'?base.prfRef:base.month(key),payload)}
     catch(e){dirty[id]=true;setSync('error');return}
     if(!anyDirty())setSync('ok');
   });
 }
-function flushAll(){for(const id in timers){if(dirty[id]){const m=id.startsWith('m:');const kind=id==='focus'?'focus':id==='fin'?'fin':id==='udemy'?'udemy':id==='pos'?'pos':m?'month':'cfg';flush(id,kind,m?id.slice(2):null)}}}
+function flushAll(){for(const id in timers){if(dirty[id]){const m=id.startsWith('m:');const kind=id==='focus'?'focus':id==='fin'?'fin':id==='udemy'?'udemy':id==='pos'?'pos':id==='prf'?'prf':m?'month':'cfg';flush(id,kind,m?id.slice(2):null)}}}
 addEventListener('pagehide',flushAll);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)flushAll()});
 
@@ -543,9 +554,9 @@ function startSession(u){
   try{localStorage.setItem('fnx-last-uid',u.uid)}catch(e){}
   acctEmail=u.email||'';showAuth(false);
   const {fs,db}=fb;
-  const cfgRef=fs.doc(db,'users',u.uid,'store','cfg'),focusRef=fs.doc(db,'users',u.uid,'store','focus'),finRef=fs.doc(db,'users',u.uid,'store','fin'),udemyRef=fs.doc(db,'users',u.uid,'store','udemy'),posRef=fs.doc(db,'users',u.uid,'store','pos'),colRef=fs.collection(db,'users',u.uid,'months');
-  base={cfgRef,focusRef,finRef,udemyRef,posRef,colRef,month:k=>fs.doc(colRef,k),set:fs.setDoc,unsubs:[]};
-  let firstC=true,firstF=true,firstFin=true,firstUd=true,firstPos=true,firstM=true;
+  const cfgRef=fs.doc(db,'users',u.uid,'store','cfg'),focusRef=fs.doc(db,'users',u.uid,'store','focus'),finRef=fs.doc(db,'users',u.uid,'store','fin'),udemyRef=fs.doc(db,'users',u.uid,'store','udemy'),posRef=fs.doc(db,'users',u.uid,'store','pos'),prfRef=fs.doc(db,'users',u.uid,'store','prf'),colRef=fs.collection(db,'users',u.uid,'months');
+  base={cfgRef,focusRef,finRef,udemyRef,posRef,prfRef,colRef,month:k=>fs.doc(colRef,k),set:fs.setDoc,unsubs:[]};
+  let firstC=true,firstF=true,firstFin=true,firstUd=true,firstPos=true,firstPrf=true,firstM=true;
   base.unsubs.push(fs.onSnapshot(cfgRef,snap=>{
     if(!snap.exists()){
       if(firstC&&!snap.metadata.fromCache){firstC=false;if(S.cfg.tasks.length||S.cfg.start)queueWrite('cfg')}
@@ -603,6 +614,16 @@ function startSession(u){
     S.pos=Object.assign(clone(DEFAULT_POS),snap.data()||{});
     saveLocal();softRender();
   },()=>setSync('error')));
+  base.unsubs.push(fs.onSnapshot(prfRef,snap=>{
+    if(!snap.exists()){
+      if(firstPrf&&!snap.metadata.fromCache){firstPrf=false;if(Object.keys(S.prf.st).length||S.prf.err.length)queueWrite('prf')}
+      return;
+    }
+    firstPrf=false;
+    if(dirty.prf)return;
+    S.prf=Object.assign(clone(DEFAULT_PRF),snap.data()||{});
+    saveLocal();softRender();
+  },()=>setSync('error')));
   base.unsubs.push(fs.onSnapshot(colRef,snap=>{
     let ch=false;
     snap.docChanges().forEach(c=>{
@@ -621,7 +642,7 @@ function startSession(u){
 }
 function endSession(){
   endListeners();
-  S.cfg={tasks:[],start:null};S.months={};S.focus=clone(DEFAULT_FOCUS);S.fin=clone(DEFAULT_FIN);S.udemy=clone(DEFAULT_UDEMY);S.pos=clone(DEFAULT_POS);acctEmail='';
+  S.cfg={tasks:[],start:null};S.months={};S.focus=clone(DEFAULT_FOCUS);S.fin=clone(DEFAULT_FIN);S.udemy=clone(DEFAULT_UDEMY);S.pos=clone(DEFAULT_POS);S.prf=clone(DEFAULT_PRF);acctEmail='';
   setSync('conn');showAuth(true);render();
 }
 const AUTH_ERR={'auth/invalid-credential':'E-mail ou senha incorretos.','auth/wrong-password':'E-mail ou senha incorretos.','auth/user-not-found':'E-mail ou senha incorretos.','auth/invalid-email':'E-mail inválido.','auth/email-already-in-use':'Este e-mail já tem conta. Use “Entrar”.','auth/weak-password':'Senha muito fraca (mínimo 6 caracteres).','auth/network-request-failed':'Sem conexão com a internet.','auth/too-many-requests':'Muitas tentativas. Aguarde um pouco e tente de novo.','auth/missing-password':'Informe a senha.'};
@@ -810,7 +831,16 @@ function studySwitcherHTML(){
     <div class="muted sm">${S.studyMode==='contest'?'Edital, Pomodoro, sessões e questões do concurso.':'Trilha Infra → Cloud → DevOps → Security: módulos, projetos, cronograma, carreira, certificações, diário e compras.'}</div>
   </section>`;
 }
-function renderStudyHub(){renderPos()}
+function studySecHTML(){
+  return`<section class="card" style="padding-bottom:10px"><div class="pmodes" style="margin:0 0 8px">
+    <button class="${S.studySec==='prf'?'on':''}" data-a="ss-sec" data-s="prf">🚔 Concurso PRF</button>
+    <button class="${S.studySec==='pos'?'on':''}" data-a="ss-sec" data-s="pos">🎓 Pós PUCPR</button></div>
+    <div class="muted sm">${S.studySec==='prf'?'Plano de 26 semanas para Agente Administrativo da PRF (nível médio): 1h30 por dia, caderno de erros e sessão guiada.':'Especialização em Cibersegurança: horas por matéria, anotações, labs e trilhas de carreira.'}</div></section>`;
+}
+function renderStudyHub(){
+  if(S.studySec==='pos')renderPos();else renderPrf();
+  const v=$('#view');if(v)v.insertAdjacentHTML('afterbegin',studySecHTML());
+}
 function renderStudy(){
   const t=todayK(),k=S.viewDay,d=getDay(k),entries=studyEntries(d);
   const isToday=k===t,inRange=k<=t;
@@ -1044,6 +1074,18 @@ function renderSummary(){
     ${rows.length?`<section class="card"><h3>Horas por matéria no período</h3>${rows.map(([id,m])=>`<div class="rate" style="grid-template-columns:minmax(100px,40%) 1fr auto"><span class="n" title="${esc(discName(id))}">${esc(discName(id))}</span><span class="b"><i style="width:${Math.round(m/mx*100)}%;background:var(--acc)"></i></span><span class="p" style="min-width:60px">${fmtDur(m)}</span></div>`).join('')}</section>`:''}`;
   })()}
 
+  <h2 class="sumdiv">🚔 Concurso PRF</h2>
+  ${(()=>{
+    const q=prfRangeStats(r.s,r.e),all=prfStats(),perr=S.prf.err.filter(x=>x.k>=r.s&&x.k<=r.e).length;
+    if(!q.days&&!perr)return`<section class="card"><div class="empty">Nenhum dia do plano PRF neste período (o plano vai de ${fFull(PRF_START)} a ${fFull(PRF_END)}).</div></section>`;
+    return`<div class="kpis">
+      <div class="kpi"><div class="k">Tarefas do plano</div><div class="v">${q.done}<span class="muted" style="font-size:15px;font-weight:500"> / ${q.tot}</span></div><div class="s">${q.tot?Math.round(q.done/q.tot*100)+'% no período':'—'}</div></div>
+      <div class="kpi"><div class="k">Dias 100% completos</div><div class="v">${q.full}<span class="muted" style="font-size:15px;font-weight:500"> / ${q.days}</span></div><div class="s">dias do plano no período</div></div>
+      <div class="kpi"><div class="k">Erros anotados</div><div class="v">${perr}</div><div class="s">${S.prf.err.length} no total</div></div>
+      <div class="kpi"><div class="k">Progresso do plano</div><div class="v">${all.tot?Math.round(all.done/all.tot*100):0}<span class="muted" style="font-size:15px;font-weight:500">%</span></div><div class="s">${all.done}/${all.tot} tarefas</div></div>
+    </div>`;
+  })()}
+
   <h2 class="sumdiv">🏋 Treino</h2>
   ${(()=>{
     const hist=trData(),dk=Object.keys(hist.days).filter(k=>k>=r.s&&k<=r.e).sort();
@@ -1082,6 +1124,7 @@ function buildSummaryText(){
   const ss=posSessionsAll().filter(x=>x.k>=r.s&&x.k<=r.e),pm=posMinBy(ss),ptot=ss.reduce((a,x)=>a+(+x.min||0),0);
   const top=Object.entries(pm).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([id,m])=>discName(id)+' '+fmtDur(m)).join(', ');
   const nts=posNotesAll().filter(n=>n.k>=r.s&&n.k<=r.e).length,pdone=POS_DISC.filter(d=>posDoneD(d.id)).length;
+  const prq=prfRangeStats(r.s,r.e),prerr=S.prf.err.filter(x=>x.k>=r.s&&x.k<=r.e).length;
   const hist=trData(),dk=Object.keys(hist.days).filter(k=>k>=r.s&&k<=r.e);
   const vol=dk.reduce((a,k)=>a+hist.days[k].vol,0);
   const fl=S.fin.entries.filter(e=>e.date>=r.s&&e.date<=r.e),ft=finTotals(fl);
@@ -1090,6 +1133,7 @@ function buildSummaryText(){
     ``,
     `Rotina: progresso médio ${av==null?'—':av+'%'}, ${sumDone}/${sumN} tarefas concluídas, estudo registrado em ${stDays}/${sts.length} dias.`,
     `Pós PUCPR (Cibersegurança): ${fmtDur(ptot)} estudadas em ${ss.length} sessões${top?' ('+top+')':''}; ${nts} anotações; ${pdone}/${POS_DISC.length} disciplinas concluídas.`,
+    `Concurso PRF: ${prq.done}/${prq.tot} tarefas do plano no período (${prq.full} dias completos); ${prerr} erros anotados no caderno.`,
     `Treino: ${dk.length} dias treinados, volume ${Math.round(vol)}kg.`,
     `Financeiro: entradas ${BRL(ft.inc)}, saídas ${BRL(ft.exp)}, saldo ${BRL(ft.bal)}.`,
     ``,
@@ -2341,6 +2385,182 @@ function confirmPomoFocus(){
   closePomoFocusModal();
   if(S.tab==='study'&&S.posTab==='horas')render();else renderTop();
 }
+/* ============ CONCURSO PRF — AGENTE ADMINISTRATIVO (nível médio) ============ */
+const PRF_DOW=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],PRF_MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const PRF_START='2026-11-09',PRF_END='2027-05-08';
+const PRF_T={
+DA:["Conceitos, princípios e regime jurídico-administrativo","Poderes da Administração","Organização administrativa: direta e indireta","Atos administrativos","Agentes públicos e Lei 8.112/1990","Responsabilidade civil do Estado","Licitações: Lei 14.133/2021","Contratos administrativos","Serviços públicos e concessões","Controle da Administração e processo administrativo (Lei 9.784/1999)","Improbidade administrativa","Bens públicos e intervenção do Estado"],
+PT:["Interpretação de texto e tipologia textual","Ortografia oficial e acentuação gráfica","Classes de palavras","Emprego de crase","Concordância verbal e nominal","Regência verbal e nominal","Pontuação","Coesão, coerência e conectivos","Semântica e figuras de linguagem","Reescrita e substituição de trechos","Redação oficial","Revisão geral de gramática com questões"],
+DC:["Princípios fundamentais","Direitos e garantias individuais e coletivos","Direitos sociais e nacionalidade","Direitos políticos","Organização do Estado e competências","Administração Pública (art. 37)","Poderes Legislativo, Executivo e Judiciário","Segurança pública (art. 144)","Defesa do Estado e das instituições","Revisão geral com questões"],
+RL:["Proposições, conectivos e tabelas-verdade","Equivalências e negações lógicas","Argumentação e silogismos","Diagramas lógicos e quantificadores","Sequências e padrões","Porcentagem e proporção","Regra de três e razão","Juros simples e compostos","Contagem e probabilidade","Estatística: média, mediana e moda","Tabelas e gráficos","Revisão geral com questões"],
+INF:["Segurança da informação: princípios e ameaças","Redes, Internet e navegadores","Windows e Linux: conceitos e atalhos","Word e Writer: formatação e recursos","Excel e Calc: fórmulas e funções","Correio eletrônico e colaboração","Nuvem e armazenamento","Backup e proteção de dados","Malware, phishing e boas práticas","Revisão geral com questões"],
+ADM:["Noções de administração pública e funções administrativas","Estrutura organizacional e processo decisório","Gestão de pessoas: recrutamento, seleção e treinamento","Classificação de materiais e curva ABC","Gestão de estoques e almoxarifado","Atendimento ao público e qualidade no serviço","Orçamento público: noções","Redação e protocolo de documentos oficiais","Revisão geral com questões"],
+ARQ:["Arquivologia: conceitos, finalidades e princípios","Ciclo vital dos documentos: as três idades","Classificação e plano de classificação","Avaliação, tabela de temporalidade e destinação","Protocolo: recebimento, registro e tramitação","Métodos de arquivamento e organização","Gestão eletrônica de documentos e preservação","Revisão geral com questões"],
+PRF:["Ética e conduta pública: Decreto 1.171/1994 e princípios","Lei 8.112/1990: regime disciplinar","LAI (Lei 12.527/2011) e Lei Anticorrupção (Lei 12.846/2013)","Estrutura e competências da PRF (conferir no edital)","Carreira e legislação relativa à PRF (conferir no edital)"]};
+const PRF_NM={DA:'Direito Administrativo',PT:'Português',DC:'Direito Constitucional',RL:'Raciocínio Lógico e Matemática',INF:'Informática',ADM:'Administração',ARQ:'Arquivologia',PRF:'Ética e Legislação da PRF'};
+const PRF_WK=[['DA','PT','ADM','ARQ','DC'],['DA','PT','ADM','DC','INF'],['DA','PT','ARQ','ADM','RL'],['ARQ','PT','INF','RL','PRF']];
+const PRF_PHASES=['Fase 1 · Base (teoria)','Fase 2 · Aprofundamento e questões','Fase 3 · Revisão final e simulados'];
+const PRF_WEEKS=(()=>{
+  const weeks=[],cnt={},skip=['25/12','01/01'];
+  for(let n=1;n<=26;n++){
+    const k=n-1,ph=k<12?0:k<24?1:2,days=[];
+    for(let i=0;i<6;i++){
+      const d=new Date(2026,10,9+7*(n-1)+i),dm=pad(d.getDate())+'/'+pad(d.getMonth()+1),lab=PRF_DOW[d.getDay()]+' '+dm;
+      if(skip.includes(dm))continue;
+      const iso=keyOf(d);
+      if(i===5){
+        days.push(k===0?{k:iso,lab,area:'Diagnóstico inicial',desc:'Faça 30 questões variadas (Português, Lógica, Direito, Administração, Arquivologia e Informática) e anote erros e temas desconhecidos.'}
+          :k%4===3?{k:iso,lab,area:'Simulado cronometrado',desc:'Faça 40–60 questões Certo/Errado com tempo; corrija e classifique cada erro por assunto. No Cebraspe, um erro pode anular um acerto.'}
+          :{k:iso,lab,area:'Questões e revisão',desc:'Resolva 25 questões da semana (estilo Certo/Errado) e releia o caderno de erros.'});
+        continue;
+      }
+      const s=PRF_WK[k%4][i],L=PRF_T[s],c=cnt[s]=(cnt[s]||0)+1,t=L[(c-1)%L.length];
+      days.push({k:iso,lab,area:PRF_NM[s],desc:ph===2?'Revisão final: '+t+'. Refaça as questões erradas e leia o caderno de erros.':c<=L.length?t+'. Teoria (aula ou PDF), resumo de 1 página e questões do tema.':'Aprofundamento: '+t+'. Revise o resumo e resolva 20 questões.'});
+    }
+    const a=new Date(2026,10,9+7*(n-1)),b=new Date(2026,10,14+7*(n-1));
+    weeks.push({rng:pad(a.getDate())+' '+PRF_MES[a.getMonth()]+' – '+pad(b.getDate())+' '+PRF_MES[b.getMonth()],phase:PRF_PHASES[ph],days});
+  }
+  return weeks;
+})();
+const PRF_IDX={};PRF_WEEKS.forEach((w,wi)=>w.days.forEach((d,di)=>{PRF_IDX[d.k]={wi,di}}));
+const PRF_TASKS=d=>[d.desc,'Resolver 10–15 questões Certo/Errado e corrigir os erros.','Anotar 1–3 pontos no caderno de erros.'];
+const PRF_BL=[['Teoria',30,0],['Pausa',5,null],['Questões',30,1],['Pausa',5,null],['Fechamento',20,2]];
+const PRF_LISTS={
+ c0:["Escolher o banco de questões (filtro Cebraspe, Certo/Errado)","Escolher o material de teoria (curso, apostila ou PDF gratuito)","Baixar o plano de estudos e o edital verticalizado","Definir o horário fixo de 1h30 por dia","Fazer o primeiro lote de questões como teste do banco escolhido"],
+ c1:["Autorização do MGI (pedido de 264 vagas)","Banca organizadora contratada (historicamente Cebraspe)","Comissão do concurso formada","Edital publicado","Inscrição feita e boleto pago"],
+ c2:["Comparar o conteúdo programático com este plano e anotar o que mudou","Reunir documentos para a investigação social","Conferir o certificado de conclusão do ensino médio","Conferir a data da prova e ajustar a fase 3","Guardar o comprovante de inscrição"]};
+const prfChecked=id=>!!S.prf.st[id];
+const prfTaskId=(wi,di,t)=>wi+'-'+di+'-'+t;
+function prfDayAny(k){const l=PRF_IDX[k];if(!l)return false;for(let t=0;t<3;t++)if(S.prf.st[prfTaskId(l.wi,l.di,t)])return true;return false}
+function prfStats(){let tot=0,done=0,full=0;PRF_WEEKS.forEach((w,wi)=>w.days.forEach((d,di)=>{let n=0;for(let t=0;t<3;t++){tot++;if(prfChecked(prfTaskId(wi,di,t))){done++;n++}}if(n===3)full++}));return{tot,done,full}}
+function prfRangeStats(s,e){let tot=0,done=0,full=0,days=0;PRF_WEEKS.forEach((w,wi)=>w.days.forEach((d,di)=>{if(d.k<s||d.k>e)return;days++;let n=0;for(let t=0;t<3;t++){tot++;if(prfChecked(prfTaskId(wi,di,t))){done++;n++}}if(n===3)full++}));return{tot,done,full,days}}
+function prfCurWeek(){const t=todayK(),i=PRF_WEEKS.findIndex(w=>w.days[w.days.length-1].k>=t);return i<0?PRF_WEEKS.length-1:i}
+function prfWeekDone(wi){return PRF_WEEKS[wi].days.filter((d,di)=>[0,1,2].every(t=>prfChecked(prfTaskId(wi,di,t)))).length}
+function prfTaskHTML(wi,di,t,text){const id=prfTaskId(wi,di,t),on=prfChecked(id);return`<label class="topicitem" style="align-items:flex-start"><input type="checkbox" data-a="pr-chk" data-id="${id}" ${on?'checked':''}> <span style="${on?'color:var(--mut);text-decoration:line-through':''}">${esc(text)}</span></label>`}
+function prfDayHTML(wi,di,today){const d=PRF_WEEKS[wi].days[di];return`<div class="prday ${today?'today':''}"><div class="shead" style="margin-bottom:4px"><b>${esc(d.lab)} · ${esc(d.area)}</b><span class="pill">90 min</span></div>${PRF_TASKS(d).map((x,t)=>prfTaskHTML(wi,di,t,x)).join('')}</div>`}
+function renderPrfPlano(){
+  const st=prfStats(),t=todayK(),left=Math.max(0,Math.ceil((parse(PRF_END)-parse(t))/864e5)),pct=st.tot?Math.round(st.done/st.tot*100):0,loc=PRF_IDX[t],cur=prfCurWeek();
+  let hoje;
+  if(loc){hoje=`<div class="entry-topic" style="font-size:16px;margin-bottom:4px">${esc(PRF_WEEKS[loc.wi].days[loc.di].lab)} · ${esc(PRF_WEEKS[loc.wi].days[loc.di].area)}</div>${PRF_TASKS(PRF_WEEKS[loc.wi].days[loc.di]).map((x,i)=>prfTaskHTML(loc.wi,loc.di,i,x)).join('')}<button class="btn" style="margin-top:10px" data-a="pr-tab" data-pt="sessao">▶ Fazer a sessão de 1h30</button>`}
+  else if(t<PRF_START){const n=Math.ceil((parse(PRF_START)-parse(t))/864e5);hoje=`<div class="muted">O plano começa em <b>${fFull(PRF_START)}</b> — faltam ${n} ${n===1?'dia':'dias'}. Use a aba “Concurso” para fazer a checklist de preparação.</div>`}
+  else if(t>PRF_END)hoje='<div class="muted">O plano terminou. Se o edital ainda não saiu, repita o ciclo com foco total em questões.</div>';
+  else hoje='<div class="muted">Hoje não há sessão no plano (domingo ou feriado). Descanse. 🌿</div>';
+  const weeks=PRF_WEEKS.map((w,wi)=>{
+    const open=S.prfOpenW[wi]!==undefined?S.prfOpenW[wi]:wi===cur,wd=prfWeekDone(wi);
+    return`<details class="card prweek" data-wk="${wi}" ${open?'open':''}><summary><div style="min-width:0;flex:1"><b>Semana ${wi+1} · ${w.rng}</b><div class="muted sm">${w.phase}</div><div class="pbarmini" style="margin-top:6px;max-width:160px"><i style="width:${Math.round(wd/w.days.length*100)}%"></i></div></div><span class="pill ${wd===w.days.length?'ok':''}">${wd}/${w.days.length} dias</span></summary><div class="prwbody">${w.days.map((d,di)=>prfDayHTML(wi,di,d.k===t)).join('')}</div></details>`;
+  }).join('');
+  return`<section class="card"><div class="head" style="margin-bottom:6px"><div><h2 style="margin:0">Painel PRF · Agente Administrativo</h2><div class="muted sm">1h30 por dia, de segunda a sábado, a partir de ${fFull(PRF_START)}. Domingo livre.</div></div><span class="pill">${left} dias até ${fShort(PRF_END)}/27</span></div>
+    <div class="pbarmini" style="height:10px"><i style="width:${pct}%"></i></div></section>
+  <div class="kpis">
+    <div class="kpi"><div class="k">Tarefas concluídas</div><div class="v">${st.done}<span class="muted" style="font-size:15px;font-weight:500"> / ${st.tot}</span></div><div class="s">planejadas no plano</div></div>
+    <div class="kpi"><div class="k">Progresso geral</div><div class="v">${pct}<span class="muted" style="font-size:15px;font-weight:500">%</span></div><div class="s">do plano de 26 semanas</div></div>
+    <div class="kpi"><div class="k">Dias 100% completos</div><div class="v">${st.full}</div><div class="s">3 de 3 tarefas</div></div>
+    <div class="kpi"><div class="k">Caderno de erros</div><div class="v">${S.prf.err.length}</div><div class="s">anotações</div></div>
+  </div>
+  <section class="card"><h3>📌 Hoje</h3>${hoje}</section>
+  <div class="head" style="margin:14px 2px 8px"><h2 style="margin:0">Cronograma semanal</h2></div>${weeks}`;
+}
+/* ---- sessão de 1h30 (5 blocos) ---- */
+let prfS={seq:null,remaining:0,end:0,running:false,k:'',msg:''};
+function prfRefresh(){if(S.tab==='study'&&S.studySec==='prf')render()}
+function prfStartSession(){
+  if(!PRF_IDX[todayK()]){prfS={seq:null,remaining:0,end:0,running:false,k:'',msg:'Hoje não há sessão no plano (domingo, feriado ou fora do período).'};render();return}
+  const c=ensureCtx();if(c&&c.state!=='running')c.resume();
+  const b=PRF_BL[0];prfS={seq:0,remaining:b[1]*60,end:Date.now()+b[1]*60000,running:true,k:todayK(),msg:''};
+  if(hasSupport()&&Notification.permission==='default'){try{Notification.requestPermission()}catch(e){}}
+  render();
+}
+function prfPause(){if(!prfS.running)return;prfS.remaining=Math.max(0,Math.round((prfS.end-Date.now())/1000));prfS.running=false;render()}
+function prfResume(){if(prfS.seq==null||prfS.running)return;prfS.end=Date.now()+prfS.remaining*1000;prfS.running=true;render()}
+function prfStop(){prfS={seq:null,remaining:0,end:0,running:false,k:'',msg:'Sessão encerrada.'};render()}
+function prfBlockDone(mark){
+  const b=PRF_BL[prfS.seq],l=PRF_IDX[prfS.k];
+  if(mark&&b[2]!==null&&l){S.prf.st[prfTaskId(l.wi,l.di,b[2])]=true;queueWrite('prf')}
+  prfS.seq++;
+  if(prfS.seq>=PRF_BL.length){prfS={seq:null,remaining:0,end:0,running:false,k:'',msg:'Sessão de hoje concluída. Bom trabalho! 🎉'}}
+  else{const nb=PRF_BL[prfS.seq];prfS.remaining=nb[1]*60;prfS.end=Date.now()+prfS.remaining*1000;prfS.running=true}
+  if(S.tab==='study'&&S.studySec==='prf')render();else renderTop();
+}
+function prfTick(){
+  if(!prfS.running)return;
+  const rem=Math.max(0,Math.round((prfS.end-Date.now())/1000));prfS.remaining=rem;
+  const c=$('#prfClock');if(c)c.textContent=fmtT(rem);
+  if(rem<=0){
+    const b=PRF_BL[prfS.seq];beep();
+    try{if(hasSupport()&&Notification.permission==='granted')new Notification('PRF · bloco concluído: '+b[0])}catch(e){}
+    prfBlockDone(true);
+  }
+}
+setInterval(prfTick,500);
+function renderPrfSessao(){
+  const t=todayK(),l=PRF_IDX[t],d=l?PRF_WEEKS[l.wi].days[l.di]:null,act=prfS.seq!=null;
+  const blocks=PRF_BL.map((b,i)=>{const st=act?(i<prfS.seq?'done':i===prfS.seq?'cur':''):'';return`<div class="rate" style="grid-template-columns:24px 1fr auto"><span>${st==='done'?'✅':st==='cur'?'▶️':'○'}</span><span class="n" style="${st==='cur'?'font-weight:700;color:var(--acc)':''}">${b[0]}${b[2]!==null?' <span class="muted sm">(marca a tarefa '+(b[2]+1)+')</span>':''}</span><span class="p">${b[1]} min</span></div>`}).join('');
+  return`<section class="card"><h2 style="margin:0 0 4px">Sessão de hoje · 1h30</h2>
+    <div class="muted sm">30 min teoria · 5 pausa · 30 questões · 5 pausa · 20 fechamento. Ao fim de cada bloco de estudo, a tarefa correspondente do dia é marcada sozinha.</div>
+    ${d?`<div class="note" style="margin-top:10px;background:rgba(255,255,255,.04);border-left:3px solid var(--acc);padding:10px 12px;border-radius:8px"><b>${esc(d.lab)} · ${esc(d.area)}</b><div class="muted sm" style="margin-top:2px">${esc(d.desc)}</div></div>`:'<div class="muted" style="margin-top:10px">Hoje não há sessão no plano (domingo, feriado ou fora do período).</div>'}
+    <div class="prclock" id="prfClock">${act?fmtT(prfS.running?Math.max(0,Math.round((prfS.end-Date.now())/1000)):prfS.remaining):'90:00'}</div>
+    <div class="muted sm" style="text-align:center;margin-bottom:10px">${act?'Bloco '+(prfS.seq+1)+'/5 · '+PRF_BL[prfS.seq][0]+(prfS.running?'':' · pausado'):(prfS.msg||'Pronto para começar.')}</div>
+    <div class="pctl">${act?(prfS.running?'<button class="btn" data-a="pr-sess-pause">⏸ Pausar</button>':'<button class="btn" data-a="pr-sess-resume">▶ Continuar</button>')+'<button class="btn ghost" data-a="pr-sess-skip">⏭ Pular bloco</button><button class="btn ghost" data-a="pr-sess-stop">■ Encerrar</button>':`<button class="btn" data-a="pr-sess-start" ${d?'':'disabled'}>▶ Iniciar a sessão de hoje</button>`}</div>
+  </section>
+  <section class="card"><h3>Blocos</h3>${blocks}</section>
+  ${d?`<section class="card"><h3>Tarefas de hoje</h3>${PRF_TASKS(d).map((x,i)=>prfTaskHTML(l.wi,l.di,i,x)).join('')}</section>`:''}`;
+}
+/* ---- caderno de erros ---- */
+const PRF_MOTIVOS=['Não sabia o conceito','Confundi termos','Li errado o enunciado','Acertei no chute'];
+function prfErrList(){const f=S.prfErrFilter;let L=S.prf.err.filter(e=>!f||e.a===f).slice().reverse();if(S.prfRev)L=S.prf.err.filter(e=>S.prfRev.includes(e.id));return L}
+function renderPrfErros(){
+  const E=S.prf.err,by={},mm={};E.forEach(e=>{by[e.a]=(by[e.a]||0)+1;mm[e.m]=(mm[e.m]||0)+1});
+  const top=Object.entries(by).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const opts=Array.from(new Set(Object.values(PRF_NM)));
+  const L=prfErrList();
+  return`<section class="card"><h2 style="margin:0 0 4px">📓 Caderno de erros</h2><div class="muted sm">Anote cada questão que errou ou acertou no chute. No começo de cada sessão, revise 3.</div>
+    <label class="lb" style="margin-top:12px">Assunto</label><input type="text" id="prErrA" list="prErrL" maxlength="80" placeholder="Ex.: Crase, Licitações, Arquivologia"><datalist id="prErrL">${opts.map(o=>`<option value="${esc(o)}">`).join('')}</datalist>
+    <label class="lb" style="margin-top:10px">Motivo</label><select class="sel" id="prErrM">${PRF_MOTIVOS.map(m=>`<option>${m}</option>`).join('')}</select>
+    <label class="lb" style="margin-top:10px">O certo, em uma frase, com as suas palavras</label><textarea id="prErrR" style="min-height:70px"></textarea>
+    <div class="err">${esc(S.prfMsg||'')}</div><button class="btn" data-a="pr-err-add">Adicionar ao caderno</button></section>
+  <section class="card"><div class="muted sm" style="line-height:2">${E.length?`<b>${E.length}</b> anotações. Assuntos em que mais erra: ${top.map(x=>`<span class="chip">${esc(x[0])}<b>${x[1]}</b></span>`).join(' ')}<br>Motivos: ${Object.entries(mm).map(x=>`<span class="chip">${esc(x[0])}<b>${x[1]}</b></span>`).join(' ')}`:'Nenhum erro anotado ainda.'}</div>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><select class="sel" id="prErrF" style="flex:1;min-width:160px"><option value="">Todos os assuntos</option>${Object.keys(by).sort().map(a=>`<option value="${esc(a)}" ${S.prfErrFilter===a?'selected':''}>${esc(a)} (${by[a]})</option>`).join('')}</select><button class="btn ghost sm2" data-a="pr-err-rev">${S.prfRev?'Mostrar todos':'Sortear 3 para revisar'}</button></div></section>
+  <section class="card">${L.length?L.map(e=>{const arm=S.delId===e.id;return`<div class="sentry"><div class="shead"><span><span class="chip">${esc(e.a)}</span> <span class="muted sm">${esc(e.m)} · ${fShort(e.k)}</span></span>${arm?`<button class="mini danger arm" data-a="pr-err-del" data-id="${e.id}">Confirmar</button>`:`<button class="mini danger" data-a="pr-err-del" data-id="${e.id}" aria-label="Excluir">${TRASH}</button>`}</div><div style="white-space:pre-wrap">${esc(e.r||'(sem resposta anotada)')}</div></div>`}).join(''):'<div class="empty">Nada para mostrar.</div>'}</section>`;
+}
+/* ---- informações do concurso ---- */
+function prfChecklist(key,title){return`<section class="card"><h3>${title}</h3>${PRF_LISTS[key].map((x,i)=>{const id=key+'-'+i,on=prfChecked(id);return`<label class="topicitem" style="align-items:flex-start"><input type="checkbox" data-a="pr-chk" data-id="${id}" ${on?'checked':''}> <span style="${on?'color:var(--mut);text-decoration:line-through':''}">${esc(x)}</span></label>`}).join('')}</section>`}
+function renderPrfInfo(){
+  const li=a=>a.map(x=>`<div class="muted sm" style="margin:6px 0">• ${x}</div>`).join('');
+  return`<section class="card"><h3>O cargo</h3>${li(['Agente Administrativo da PRF, nível médio, sem TAF e sem CNH.','Salário inicial de R$ 5.562,28 (cerca de R$ 6.500 com auxílio-alimentação).','40h semanais, segunda a sexta, sem plantão.','264 vagas solicitadas. Hoje: aguardando autorização, sem banca nem data de edital.'])}</section>
+  ${prfChecklist('c0','Antes de começar (até 08/11)')}
+  <section class="card"><h3>Como a semana funciona</h3>${li(['Todo dia: 1h30 (30 min de teoria, 30 de questões, 20 de fechamento e pausas).','Português toda terça. Direito Administrativo, Administração e Arquivologia têm mais sessões; Constitucional, Informática, Lógica/Matemática e Ética/PRF se alternam nas demais.','Sáb: questões e revisão; simulado a cada 4 semanas. O primeiro sábado (14/11) é o diagnóstico inicial.','Peso de referência (portais, último edital): 6 questões cada em Direito Administrativo, Constitucional, Administração, Arquivologia e Informática. Confirme no novo edital.'])}</section>
+  ${prfChecklist('c1','Andamento do concurso')}<div class="muted sm" style="margin:-4px 4px 14px">Se o edital não sair até o fim do plano, repita o ciclo com foco total em questões.</div>
+  ${prfChecklist('c2','Quando sair o edital')}
+  <section class="card"><h3>Regras do plano</h3>${li(['Resolva questões do Cebraspe (Certo/Errado) desde a semana 1, mesmo antes de a banca ser confirmada.','Comece cada sessão revisando 3 erros do caderno de erros.','Semana de aula da pós: se faltar tempo, faça só 30 min de teoria e recupere no sábado.','Domingo é descanso. Natal e Ano Novo ficam de fora do plano. Sem culpa nos feriados.'])}<p class="muted sm" style="margin-top:10px">Plano baseado no último edital de referência; ajuste quando o novo edital sair.</p></section>`;
+}
+function renderPrf(){
+  const tabs=[['plano','📅 Plano'],['sessao','⏱ Sessão'],['erros','📓 Erros'],['info','ℹ️ Concurso']];
+  const sub=`<div class="fsubtabs">${tabs.map(x=>`<button class="fsubtab ${S.prfTab===x[0]?'on':''}" data-a="pr-tab" data-pt="${x[0]}">${x[1]}</button>`).join('')}</div>`;
+  const body=S.prfTab==='plano'?renderPrfPlano():S.prfTab==='sessao'?renderPrfSessao():S.prfTab==='erros'?renderPrfErros():renderPrfInfo();
+  $('#view').innerHTML=sub+body;
+}
+function prfAction(a,el){
+  const id=el.dataset.id;
+  switch(a){
+    case'pr-tab':S.prfTab=el.dataset.pt;S.prfMsg='';S.delId=null;render();scrollTo({top:0});break;
+    case'pr-chk':S.prf.st[id]=el.checked;queueWrite('prf');render();break;
+    case'pr-sess-start':prfStartSession();break;
+    case'pr-sess-pause':prfPause();break;
+    case'pr-sess-resume':prfResume();break;
+    case'pr-sess-stop':prfStop();break;
+    case'pr-sess-skip':if(prfS.seq!=null)prfBlockDone(false);break;
+    case'pr-err-add':{
+      const a1=$('#prErrA'),m=$('#prErrM'),r=$('#prErrR'),as=a1?a1.value.trim():'';
+      if(!as){S.prfMsg='Informe o assunto.';render();break}
+      S.prf.err.push({id:uid8(),a:as.slice(0,80),m:m?m.value:PRF_MOTIVOS[0],r:(r?r.value.trim():'').slice(0,1000),k:todayK()});
+      S.prfMsg='';S.prfRev=null;queueWrite('prf');render();break}
+    case'pr-err-del':if(S.delId===id){S.prf.err=S.prf.err.filter(x=>x.id!==id);if(S.prfRev)S.prfRev=null;S.delId=null;queueWrite('prf');render()}else{S.delId=id;render();setTimeout(()=>{if(S.delId===id){S.delId=null;if(S.tab==='study')softRender()}},3000)}break;
+    case'pr-err-rev':{
+      if(S.prfRev){S.prfRev=null}
+      else{const p=S.prf.err.filter(e=>!S.prfErrFilter||e.a===S.prfErrFilter).slice().sort(()=>Math.random()-.5).slice(0,3);if(!p.length){S.prfMsg='Anote alguns erros primeiro.'}else S.prfRev=p.map(e=>e.id)}
+      render();break}
+  }
+}
 /* ============ render geral ============ */
 function render(){
   renderTop();
@@ -2361,9 +2581,11 @@ document.addEventListener('click',ev=>{
   const el=ev.target.closest('[data-a]');if(!el)return;
   const a=el.dataset.a,id=el.dataset.id;
   if(a.indexOf('ps-')===0){posAction(a,el);return}
+  if(a.indexOf('pr-')===0){prfAction(a,el);return}
+  if(a==='ss-sec'){S.studySec=el.dataset.s;try{localStorage.setItem('fnx-studysec',S.studySec)}catch(e){}render();return}
   switch(a){
     case'tab':S.tab=el.dataset.t;S.editId=null;S.delId=null;if(S.tab==='study'){S.viewDay=todayK();S.studyEdit=null}else if(S.tab==='checks'){S.checkDay=todayK()}else if(S.tab==='treino'){S.trDay=todayK();S.trErr=''}else if(S.tab==='fin'){S.finEdit=null;S.finErr=''}scrollTo({top:0});render();break;
-    case'go-study':S.tab='study';S.posTab='horas';S.posOpen=null;scrollTo({top:0});render();break;
+    case'go-study':S.tab='study';S.studySec='pos';S.posTab='horas';S.posOpen=null;scrollTo({top:0});render();break;
     case'tr-tab':
     case'tr-prev':
     case'tr-next':
@@ -2408,7 +2630,7 @@ document.addEventListener('click',ev=>{
       if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(ok).catch(()=>{if(msg)msg.textContent=txt});
       else if(msg)msg.textContent=txt;
       break}
-    case'go-focus':S.tab='study';S.posTab='horas';S.posOpen=null;scrollTo({top:0});render();break;
+    case'go-focus':S.tab='study';S.studySec='pos';S.posTab='horas';S.posOpen=null;scrollTo({top:0});render();break;
     case'toggle':toggleTask(id);break;
     case'edit':S.editId=id;S.delId=null;S.editAlarm=undefined;render();{const i=$('#editInp');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}}break;
     case'save-edit':{const ai=$('#editAlarmTime');editTask(id,$('#editInp').value,ai?ai.value:'');askNotifIfNeeded();break}
@@ -2425,7 +2647,7 @@ document.addEventListener('click',ev=>{
     case'check-today':S.checkDay=todayK();S.delId=null;render();break;
     case'add-once':{const i=$('#onceTask');S.onceText=i.value;addOnceTask(el.dataset.k,i.value);const n=$('#onceTask');if(n)n.focus()}break;
     case'del-once':if(S.delId===id){delOnceTask(el.dataset.k,id)}else{S.delId=id;render();setTimeout(()=>{if(S.delId===id){S.delId=null;if(S.tab==='checks')softRender()}},3000)}break;
-    case'go-study-day':S.tab='study';S.posTab='horas';S.posOpen=null;scrollTo({top:0});render();break;
+    case'go-study-day':S.tab='study';S.studySec='pos';S.posTab='horas';S.posOpen=null;scrollTo({top:0});render();break;
     case'del':if(S.delId===id){delTask(id)}else{S.delId=id;render();setTimeout(()=>{if(S.delId===id){S.delId=null;if(S.tab==='checks')softRender()}},3000)}break;
     case'add-task':{const i=$('#newTask'),ai=$('#newAlarmTime');addTask(i.value,ai?ai.value:'');askNotifIfNeeded();const n=$('#newTask');if(n)n.focus()}break;
     case'study-prev':S.viewDay=addDays(S.viewDay,-1);S.studyEdit=null;S.studyErr='';render();break;
@@ -2440,7 +2662,7 @@ document.addEventListener('click',ev=>{
       if(!tp.trim()||!tx.trim()){S.studyErr='Preencha o tema e o que você aprendeu.';$('#stErr').textContent=S.studyErr;return}
       if(sid==='new')addStudyEntry(S.viewDay,tp,tx,tg);else editStudyEntry(S.viewDay,sid,tp,tx,tg);
       break}
-    case'open-study':S.tab='study';S.posTab='horas';S.posOpen=null;scrollTo({top:0});render();break;
+    case'open-study':S.tab='study';S.studySec='pos';S.posTab='horas';S.posOpen=null;scrollTo({top:0});render();break;
     case'hist-more':S.histN+=20;renderHist();break;
     case'per':S.period=el.dataset.p;S.selDay=null;render();break;
     case'nav':{const d=+el.dataset.d;
@@ -2537,9 +2759,11 @@ document.addEventListener('input',ev=>{
   else if(t.id==='vol'){SET.vol=t.value/100;$('#volTxt').textContent=t.value+'%';saveSet();if(A.master)A.master.gain.setTargetAtTime(SET.vol,A.ctx.currentTime,.05)}
 });
 document.addEventListener('toggle',e=>{if(e.target.id==='pset')pOpen=e.target.open},true);
+document.addEventListener('toggle',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.wk!==undefined)S.prfOpenW[+t.dataset.wk]=t.open},true);
 document.addEventListener('change',ev=>{
   const tg=ev.target,ds=tg.dataset||{};
   if(ds.ps){posField(tg);return}
+  if(tg.id==='prErrF'){S.prfErrFilter=tg.value;S.prfRev=null;render();return}
   if(tg.id==='posNoteDisc'){S.posNoteDisc=tg.value;renderPosNotesList();return}
   if(tg.id==='backupFile'){backupImportFile(tg.files&&tg.files[0]);tg.value='';return}
   if(ds.pf){planField(tg);return}
@@ -2737,7 +2961,7 @@ function syncAudio(){
 }
 function toggleSound(){SET.sound=!SET.sound;saveSet();buildSheet();syncAudio()}
 function backupExport(){
-  const payload={fnxBackup:1,exportedAt:new Date().toISOString(),cfg:S.cfg,months:S.months,focus:S.focus,fin:S.fin,udemy:S.udemy,pos:S.pos};
+  const payload={fnxBackup:1,exportedAt:new Date().toISOString(),cfg:S.cfg,months:S.months,focus:S.focus,fin:S.fin,udemy:S.udemy,pos:S.pos,prf:S.prf};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob),a=document.createElement('a');
   a.href=url;a.download='fnx-backup-'+todayK()+'.json';document.body.appendChild(a);a.click();a.remove();
@@ -2759,8 +2983,9 @@ function backupImportFile(file){
     S.fin=Object.assign(clone(DEFAULT_FIN),data.fin||{});
     S.udemy=Object.assign(clone(DEFAULT_UDEMY),data.udemy||{});
     S.pos=Object.assign(clone(DEFAULT_POS),data.pos||{});
+    S.prf=Object.assign(clone(DEFAULT_PRF),data.prf||{});
     saveLocal();
-    queueWrite('cfg');queueWrite('focus');queueWrite('fin');queueWrite('udemy');queueWrite('pos');
+    queueWrite('cfg');queueWrite('focus');queueWrite('fin');queueWrite('udemy');queueWrite('pos');queueWrite('prf');
     Object.keys(S.months).forEach(m=>queueWrite('month',m));
     if(msg){msg.className='err ok';msg.textContent='Backup importado com sucesso.'}
     render();
